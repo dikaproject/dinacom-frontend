@@ -4,10 +4,12 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useAuth } from '@/context/AuthContext';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const { user, logout } = useAuth();
 
   // Handle scroll effect
   useEffect(() => {
@@ -17,6 +19,20 @@ const Navbar = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  const getDashboardLink = () => {
+    if (!user) return '/login';
+    switch (user.role) {
+      case 'ADMIN':
+        return '/admin/dashboard';
+      case 'DOCTOR':
+        return '/doctor/dashboard';
+      case 'USER':
+        return '/dashboard';
+      default:
+        return '/dashboard';
+    }
+  };
 
   const navItems = [
     { title: 'Home', href: '/' },
@@ -36,55 +52,98 @@ const Navbar = () => {
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20">
-          {/* Logo */}
+        <div className="flex items-center justify-between h-16 md:h-20">
+          {/* Logo - adjusted for mobile */}
           <Link href="/">
             <motion.div
               whileHover={{ scale: 1.02 }}
-              className="flex-shrink-0 flex items-center"
+              className="flex-shrink-0 flex items-center space-x-2"
             >
               <Image
-              src="/images/logo-pregnacare.png"
-              alt="PregnaCare Logo"
-              width={130}
-              height={130}
-              className="cursor-pointer"
+                src="/images/logo-pregnacare.png"
+                alt="PregnaCare Logo"
+                width={100}
+                height={100}
+                className="cursor-pointer md:w-[130px] md:h-[130px]"
               />
-              <span className=" text-xl font-bold bg-gradient-to-r from-purple-600 to-purple-400 bg-clip-text text-transparent">
-              PregnaCare
+              <span className="text-lg md:text-xl font-bold bg-gradient-to-r from-purple-600 to-purple-400 bg-clip-text text-transparent">
+                PregnaCare
               </span>
             </motion.div>
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
-            {navItems.map((item) => (
-              <motion.div
-                key={item.title}
-                whileHover={{ y: -2 }}
-                className="relative"
+          <div className="hidden md:flex items-center space-x-4">
+        {navItems.map((item) => (
+          <motion.div key={item.title} whileHover={{ y: -2 }}>
+            <Link href={item.href} className="text-gray-600 hover:text-purple-600">
+              {item.title}
+            </Link>
+          </motion.div>
+        ))}
+
+        {user ? (
+          <div className="flex items-center space-x-3 ml-4">
+            <Link href={getDashboardLink()}>
+              <motion.button
+                whileHover={{ scale: 1.02, y: -1 }}
+                whileTap={{ scale: 0.98 }}
+                className="flex items-center space-x-2 bg-gradient-to-r from-purple-500 to-purple-600 text-white px-5 py-2 rounded-full font-medium shadow-md hover:shadow-lg transition-all"
               >
-                <Link
-                  href={item.href}
-                  className="text-gray-600 hover:text-purple-600 font-medium transition-colors"
+                <svg 
+                  className="w-4 h-4" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
                 >
-                  {item.title}
-                </Link>
-              </motion.div>
-            ))}
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                <span>Dashboard</span>
+              </motion.button>
+            </Link>
             <motion.button
-              whileHover={{ scale: 1.02 }}
-              className="bg-gradient-to-r from-purple-600 to-purple-500 text-white px-6 py-2.5 rounded-full font-medium shadow-md hover:shadow-lg transition-all"
+              whileHover={{ scale: 1.02, y: -1 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={logout}
+              className="flex items-center space-x-2 bg-white border-2 border-red-500 text-red-500 px-5 py-2 rounded-full font-medium hover:bg-red-50 transition-all"
             >
-              Login
+              <svg 
+                className="w-4 h-4" 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              <span>Logout</span>
             </motion.button>
           </div>
+        ) : (
+          <Link href="/login">
+            <motion.button
+              whileHover={{ scale: 1.02, y: -1 }}
+              whileTap={{ scale: 0.98 }}
+              className="flex items-center space-x-2 bg-gradient-to-r from-purple-500 to-purple-600 text-white px-6 py-2.5 rounded-full font-medium shadow-md hover:shadow-lg transition-all"
+            >
+              <svg 
+                className="w-4 h-4" 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+              </svg>
+              <span>Login</span>
+            </motion.button>
+          </Link>
+        )}
+      </div>
 
-          {/* Mobile Menu Button */}
+          {/* Mobile Menu Button - adjusted styling */}
           <div className="md:hidden">
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="text-gray-700 hover:text-purple-600"
+              className="p-2 rounded-md text-gray-700 hover:text-purple-600 hover:bg-purple-50 transition-colors"
             >
               <svg
                 className="h-6 w-6"
@@ -113,28 +172,77 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Mobile Menu - improved animation and styling */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
+            animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden bg-white"
+            transition={{ duration: 0.2 }}
+            className="md:hidden overflow-hidden bg-white border-t"
           >
-            <div className="px-2 pt-2 pb-3 space-y-1">
+            <div className="px-4 py-3 space-y-2">
               {navItems.map((item) => (
-                <Link
-                  key={item.title}
+                <Link 
+                  key={item.title} 
                   href={item.href}
-                  className="block px-3 py-2 text-gray-700 hover:text-purple-600 hover:bg-purple-50 rounded-md"
+                  onClick={() => setIsOpen(false)}
                 >
-                  {item.title}
+                  <motion.div
+                    whileTap={{ scale: 0.98 }}
+                    className="block px-4 py-2.5 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                  >
+                    {item.title}
+                  </motion.div>
                 </Link>
               ))}
-              <button className="w-full text-left block px-3 py-2 text-white bg-purple-600 hover:bg-purple-700 rounded-md">
-                Login
-              </button>
+              {user ? (
+                <>
+                  <Link
+                    href={getDashboardLink()}
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <motion.div
+                      whileTap={{ scale: 0.98 }}
+                      className="flex items-center space-x-2 px-4 py-2.5 text-white bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                      </svg>
+                      <span>Dashboard</span>
+                    </motion.div>
+                  </Link>
+                  <motion.button
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => {
+                      logout();
+                      setIsOpen(false);
+                    }}
+                    className="w-full flex items-center space-x-2 px-4 py-2.5 text-red-500 border-2 border-red-500 rounded-lg"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    <span>Logout</span>
+                  </motion.button>
+                </>
+              ) : (
+                <Link 
+                  href="/login"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <motion.div
+                    whileTap={{ scale: 0.98 }}
+                    className="flex items-center justify-center space-x-2 px-4 py-2.5 text-white bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                    </svg>
+                    <span>Login</span>
+                  </motion.div>
+                </Link>
+              )}
             </div>
           </motion.div>
         )}
