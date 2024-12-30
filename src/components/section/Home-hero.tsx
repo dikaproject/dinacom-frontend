@@ -70,49 +70,51 @@ const HomeHero = () => {
           </motion.div>
 
           {/* Hero Image */}
-          <motion.div
+            <motion.div
             className="relative"
             variants={floatingAnimation}
             animate="animate"
-          >
+            >
             <Image
-              src="/hero-illustration.png"
+              src="/images/hero.jpg"
               alt="Pregnancy Care Illustration"
               width={600}
               height={600}
-              className="w-full h-auto max-w-md mx-auto"
+              className="w-full h-auto max-w-md mx-auto rounded-2xl"
               priority
             />
             
             {/* Floating Elements */}
             <motion.div
-              className="absolute -top-10 right-10 bg-white p-4 rounded-xl shadow-lg"
+              className="absolute -top-5 right-10 bg-white p-2 rounded-xl shadow-lg"
               variants={floatingAnimation}
               animate="animate"
               transition={{ delay: 0.2 }}
             >
               <Image
-                src="/doctor-icon.png"
-                alt="Doctor"
-                width={40}
-                height={40}
+              src="/images/doctoricon.jpg"
+              alt="Doctor"
+              width={55}
+              height={55}
+              className="rounded-lg object-cover"
               />
             </motion.div>
             
             <motion.div
-              className="absolute -bottom-5 left-10 bg-white p-4 rounded-xl shadow-lg"
+              className="absolute -bottom-5 left-10 bg-white p-2 rounded-xl shadow-lg"
               variants={floatingAnimation}
               animate="animate"
               transition={{ delay: 0.4 }}
             >
               <Image
-                src="/baby-icon.png"
-                alt="Baby"
-                width={40}
-                height={40}
+              src="/images/babyicon.jpg"
+              alt="Baby"
+              width={55}
+              height={55}
+              className="rounded-lg object-cover"
               />
             </motion.div>
-          </motion.div>
+            </motion.div>
         </div>
       </div>
     </section>

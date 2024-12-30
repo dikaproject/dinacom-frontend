@@ -30,26 +30,28 @@ const Navbar = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       className={`fixed w-full z-50 transition-all duration-300 ${
-        scrolled ? 'bg-white shadow-md' : 'bg-transparent'
+        scrolled 
+          ? 'bg-white shadow-lg backdrop-blur-sm' 
+          : 'bg-white/70 backdrop-blur-sm'
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <Link href="/">
             <motion.div
-              whileHover={{ scale: 1.05 }}
+              whileHover={{ scale: 1.02 }}
               className="flex-shrink-0 flex items-center"
             >
               <Image
-                src="/logo.png"
-                alt="PregnaCare Logo"
-                width={40}
-                height={40}
-                className="cursor-pointer"
+              src="/images/logo-pregnacare.png"
+              alt="PregnaCare Logo"
+              width={130}
+              height={130}
+              className="cursor-pointer"
               />
-              <span className="ml-2 text-xl font-bold text-purple-600">
-                PregnaCare
+              <span className=" text-xl font-bold bg-gradient-to-r from-purple-600 to-purple-400 bg-clip-text text-transparent">
+              PregnaCare
               </span>
             </motion.div>
           </Link>
@@ -59,20 +61,20 @@ const Navbar = () => {
             {navItems.map((item) => (
               <motion.div
                 key={item.title}
-                whileHover={{ scale: 1.1 }}
+                whileHover={{ y: -2 }}
                 className="relative"
               >
                 <Link
                   href={item.href}
-                  className="text-gray-700 hover:text-purple-600 transition-colors"
+                  className="text-gray-600 hover:text-purple-600 font-medium transition-colors"
                 >
                   {item.title}
                 </Link>
               </motion.div>
             ))}
             <motion.button
-              whileHover={{ scale: 1.05 }}
-              className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700"
+              whileHover={{ scale: 1.02 }}
+              className="bg-gradient-to-r from-purple-600 to-purple-500 text-white px-6 py-2.5 rounded-full font-medium shadow-md hover:shadow-lg transition-all"
             >
               Login
             </motion.button>

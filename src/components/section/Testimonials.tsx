@@ -15,21 +15,21 @@ const Testimonials = () => {
       quote: "PregnaCare has been invaluable throughout my pregnancy journey. The AI diagnosis feature helped me stay informed, and the doctors were always there when I needed them.",
       author: "Sarah Johnson",
       role: "First-time Mother",
-      image: "/testimonial-1.jpg"
+      image: "/images/testimonial.jpg"
     },
     {
       id: 2,
       quote: "The community support and expert advice available through PregnaCare made me feel confident and supported during my second pregnancy.",
       author: "Maria Garcia",
       role: "Mother of Two",
-      image: "/testimonial-2.jpg"
+      image: "/images/testimonial.jpg"
     },
     {
       id: 3,
       quote: "I love how easy it is to track my pregnancy progress and get instant answers through the AI chat. It's like having a personal pregnancy assistant.",
       author: "Emily Chen",
       role: "Expecting Mother",
-      image: "/testimonial-3.jpg"
+      image: "/images/testimonial.jpg"
     }
   ];
 
