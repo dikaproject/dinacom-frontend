@@ -1,10 +1,10 @@
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import Hero from '@/components/section/Home-hero';
-import Features from '@/components/section/Features';
+import Hero from '@/components/section/home/Home-hero';
+import Features from '@/components/section/home/Features';
 import Workflow from '@/components/section/Workflow';
-import Faq from '@/components/section/Faq';
-import Testimonials from '@/components/section/Testimonials';
+import Faq from '@/components/section/home/Faq';
+import Testimonials from '@/components/section/home/Testimonials';
 
 
 export default function Home() {
