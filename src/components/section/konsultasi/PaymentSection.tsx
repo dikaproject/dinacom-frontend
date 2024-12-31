@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useForm } from 'react-hook-form';
-import { FiCreditCard, FiLock, FiCheckCircle } from 'react-icons/fi';
+import { FiCreditCard, FiLock } from 'react-icons/fi';
 
 interface PaymentSectionProps {
   nextStep: () => void;
@@ -49,11 +49,6 @@ const PaymentSection = ({ nextStep, prevStep }: PaymentSectionProps) => {
     total: 401500
   };
 
-interface PaymentData {
-    cardNumber: string;
-    expiryDate: string;
-    cvv: string;
-}
 
 const handlePayment = async (): Promise<void> => {
     setIsProcessing(true);

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useForm } from 'react-hook-form';
-import { FiUpload, FiX, FiCheck } from 'react-icons/fi';
+import { FiUpload, FiX } from 'react-icons/fi';
 
 interface ConsultationFormProps {
   nextStep: () => void;
@@ -17,8 +17,7 @@ const ConsultationForm: React.FC<ConsultationFormProps> = ({ nextStep, prevStep 
   const {
     register,
     handleSubmit,
-    formState: { errors, isValid },
-    watch,
+    formState: { errors },
     trigger
   } = useForm<FormData>({
     mode: 'onChange'
