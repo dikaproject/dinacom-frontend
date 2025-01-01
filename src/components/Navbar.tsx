@@ -38,7 +38,7 @@ const Navbar = () => {
     { title: 'Home', href: '/' },
     { title: 'Diagnosa', href: '/diagnosa' },
     { title: 'Konsultasi', href: '/konsultasi' },
-    { title: 'About Us', href: '/about' },
+    { title: 'Community', href: '/community' },
   ];
 
   return (
