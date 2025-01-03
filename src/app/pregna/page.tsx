@@ -1,12 +1,13 @@
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import Diagnosa from '@/components/section/diagnosa/Diagnosa';
+import Pregnaai from '@/components/section/pregnaai/Pregna';
 
-export default function diagnosa() {
+
+export default function pregna() {
   return (
     <main className="min-h-screen">
       <Navbar />
-       <Diagnosa />
+    <Pregnaai />
       <Footer />
     </main>
   );

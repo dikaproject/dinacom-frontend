@@ -1,12 +1,13 @@
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import Diagnosa from '@/components/section/diagnosa/Diagnosa';
+import Community from '@/components/section/community/Community';
 
-export default function diagnosa() {
+
+export default function community() {
   return (
     <main className="min-h-screen">
       <Navbar />
-       <Diagnosa />
+        <Community />
       <Footer />
     </main>
   );
