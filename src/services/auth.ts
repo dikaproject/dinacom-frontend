@@ -5,7 +5,7 @@ import { AxiosError } from 'axios';
 interface AuthResponse {
   message: string;
   token: string;
-  user?: User;
+  user: User;
 }
 
 interface ApiError {
@@ -30,14 +30,35 @@ export const authService = {
   register: async (userData: RegisterCredentials): Promise<AuthResponse> => {
     try {
       const { email, password } = userData;
-      const response = await api.post('/auth/register', { email, password });
-      return response.data;
-    } catch (error: unknown) {
-      const axiosError = error as AxiosError<ApiError>;
-      if (axiosError.response?.status === 400) {
-        throw new Error('Email already exists');
+      const response = await api.post('/auth/register', { 
+        email, 
+        password,
+        role: 'USER'
+      });
+      
+      // If the response data is not in expected format, try to normalize it
+      const normalized = {
+        message: response.data.message || 'Registration successful',
+        token: response.data.token || response.data.access_token || '',
+        user: response.data.user || response.data.userData || null
+      };
+
+      // Validate minimum required data
+      if (!normalized.token || !normalized.user) {
+        console.error('Invalid response structure:', response.data);
+        throw new Error('Invalid response from server');
       }
-      throw new Error(axiosError.response?.data?.message || 'Registration failed');
+
+      return normalized;
+    } catch (error) {
+      console.error("Register Error Details:", error);
+      if (error instanceof AxiosError) {
+        const errorMessage = error.response?.data?.message 
+          || error.response?.data?.error 
+          || 'Registration failed';
+        throw new Error(errorMessage);
+      }
+      throw error; // Re-throw unexpected errors
     }
   },
 

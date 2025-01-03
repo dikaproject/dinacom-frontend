@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
 import { authService } from "@/services/auth";
 import type { UserRole } from "@/types/auth";
+import { Eye, EyeOff } from 'lucide-react';
 
 const fadeIn = {
   initial: { opacity: 0, y: 20 },
@@ -32,6 +33,7 @@ const LoginForm = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleRoleBasedRedirect = (role: UserRole) => {
     switch (role) {
@@ -112,18 +114,29 @@ const LoginForm = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">
-                    Password
-                  </label>
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-4 py-3 text-gray-600 rounded-lg border border-purple-100 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent"
-                    placeholder="Enter your password"
-                    required
-                  />
-                </div>
+  <label className="text-sm font-medium text-gray-700">Password</label>
+  <div className="relative">
+    <input
+      type={showPassword ? "text" : "password"}
+      value={password}
+      onChange={(e) => setPassword(e.target.value)}
+      className="w-full px-4 py-3 text-gray-600 rounded-lg border border-purple-100 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent"
+      placeholder="Enter your password"
+      required
+    />
+    <button
+      type="button"
+      onClick={() => setShowPassword(!showPassword)}
+      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-purple-600"
+    >
+      {showPassword ? (
+        <EyeOff size={20} className="transition-colors" />
+      ) : (
+        <Eye size={20} className="transition-colors" />
+      )}
+    </button>
+  </div>
+</div>
 
                 <div className="flex items-center justify-between">
                   <label className="flex items-center">
