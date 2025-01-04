@@ -5,10 +5,12 @@ import Features from '@/components/section/home/Features';
 import Workflow from '@/components/section/Workflow';
 import Faq from '@/components/section/home/Faq';
 import Testimonials from '@/components/section/home/Testimonials';
+import PageWrapper from '@/components/PageWrapper';
 
 
 export default function Home() {
   return (
+    <PageWrapper>
     <main className="min-h-screen">
       <Navbar />
       <Hero />
@@ -18,5 +20,6 @@ export default function Home() {
       <Testimonials />
       <Footer />
     </main>
+    </PageWrapper>
   );
 }
