@@ -1,15 +1,14 @@
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import Pregnaai from '@/components/section/pregnaai/Pregna';
+import Shop from '@/components/section/pregnashop/Shop';
 import PageWrapper from '@/components/PageWrapper';
 
-
-export default function pregna() {
+export default function pregnashop() {
   return (
     <PageWrapper>
     <main className="min-h-screen">
       <Navbar />
-    <Pregnaai />
+      <Shop />
       <Footer />
     </main>
   </PageWrapper>

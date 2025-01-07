@@ -42,6 +42,8 @@ const Navbar = () => {
     { title: 'Konsultasi', href: '/konsultasi' },
     { title: 'Community', href: '/community' },
     { title: 'PregnaAi', href: '/pregna' },
+    { title: 'PregnaShop', href: '/pregnashop' },
+
   ];
 
   return (

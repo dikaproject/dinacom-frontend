@@ -26,6 +26,7 @@ const floatingAnimation = {
 };
 
 const RegisterForm = () => {
+  // ... state dan logic tetap sama
   const { login } = useAuth();
   const [formData, setFormData] = useState({
     email: "",
@@ -38,6 +39,7 @@ const RegisterForm = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
+  // ... semua handler dan validasi tetap sama
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
       ...formData,
@@ -59,13 +61,13 @@ const RegisterForm = () => {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
+    // ... handleSubmit logic tetap sama
     e.preventDefault();
     setError("");
     setIsLoading(true);
     setIsSuccess(false);
   
     try {
-      // Validate password
       if (!validatePassword(formData.password)) {
         setError("Password doesn't meet security requirements");
         setIsLoading(false);
@@ -84,19 +86,9 @@ const RegisterForm = () => {
         confirmPassword: formData.confirmPassword,
       });
   
-      // Add debug logging
-      console.log("Registration response:", {
-        hasToken: !!response.token,
-        hasUser: !!response.user,
-        userData: response.user
-      });
-  
-      // Check response and handle login
       if (response.token && response.user) {
         setIsSuccess(true);
         await login(response.token, response.user);
-        
-        // Add delay before redirect
         setTimeout(() => {
           window.location.href = '/dashboard';
         }, 1500);
@@ -113,27 +105,31 @@ const RegisterForm = () => {
   };
 
   return (
-    <section className="min-h-screen flex items-center justify-center py-32 px-4 bg-gradient-to-b from-white to-purple-50">
-      <div className="absolute inset-0 opacity-5">
+    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-b from-white to-purple-50 py-16 md:py-24">
+      {/* Background Pattern */}
+      <div className="fixed inset-0 opacity-5 pointer-events-none overflow-hidden">
         <div className="absolute w-96 h-96 rounded-full bg-purple-300 blur-3xl -top-20 -left-20" />
         <div className="absolute w-96 h-96 rounded-full bg-purple-300 blur-3xl -bottom-20 -right-20" />
       </div>
 
-      <div className="relative w-full max-w-4xl bg-white rounded-2xl shadow-xl overflow-hidden">
-        <div className="grid grid-cols-1 md:grid-cols-2">
+      <div className="relative w-[90%] sm:w-[95%] max-w-4xl mx-auto bg-white rounded-2xl shadow-xl my-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 min-h-[600px]">
+          {/* Form Section */}
           <motion.div
-            className="p-8 md:p-12"
+            className="p-8 md:p-12 flex flex-col justify-center"
             initial="initial"
             animate="animate"
             variants={fadeIn}
           >
-            <div className="space-y-6">
-              <h2 className="text-3xl font-bold text-gray-800">
-                Create Account
-              </h2>
-              <p className="text-gray-600">
-                Start your pregnancy journey with us
-              </p>
+            <div className="space-y-8">
+              <div className="space-y-2">
+                <h2 className="text-3xl font-bold text-gray-800">
+                  Create Account
+                </h2>
+                <p className="text-gray-600">
+                  Start your pregnancy journey with us
+                </p>
+              </div>
 
               {error && (
                 <div className="p-3 text-sm text-red-600 bg-red-50 rounded-lg">
@@ -141,7 +137,9 @@ const RegisterForm = () => {
                 </div>
               )}
 
+              {/* Form tetap sama */}
               <form onSubmit={handleSubmit} className="space-y-6">
+                {/* ... form fields tetap sama ... */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700">
                     Email
@@ -202,9 +200,7 @@ const RegisterForm = () => {
                     />
                     <button
                       type="button"
-                      onClick={() =>
-                        setShowConfirmPassword(!showConfirmPassword)
-                      }
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-purple-600"
                     >
                       {showConfirmPassword ? (
@@ -227,86 +223,93 @@ const RegisterForm = () => {
                 </div>
 
                 <div className="space-y-4">
-  <motion.button
-    whileHover={{ scale: 1.02 }}
-    whileTap={{ scale: 0.98 }}
-    type="submit"
-    disabled={isLoading || isSuccess}
-    className={`w-full py-3 bg-gradient-to-r relative ${
-      isSuccess 
-        ? "from-green-600 to-green-500" 
-        : "from-purple-600 to-purple-500"
-    } text-white rounded-lg font-medium shadow-lg hover:shadow-xl transition-all ${
-      (isLoading || isSuccess) ? "opacity-70 cursor-not-allowed" : ""
-    }`}
-  >
-    {isLoading ? (
-      <div className="flex items-center justify-center">
-        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-        </svg>
-        Creating Account...
-      </div>
-    ) : isSuccess ? (
-      <div className="flex items-center justify-center">
-        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-        </svg>
-        Registration Successful!
-      </div>
-    ) : (
-      "Create Account"
-    )}
-  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    type="submit"
+                    disabled={isLoading || isSuccess}
+                    className={`w-full py-3 bg-gradient-to-r relative ${
+                      isSuccess 
+                        ? "from-green-600 to-green-500" 
+                        : "from-purple-600 to-purple-500"
+                    } text-white rounded-lg font-medium shadow-lg hover:shadow-xl transition-all ${
+                      (isLoading || isSuccess) ? "opacity-70 cursor-not-allowed" : ""
+                    }`}
+                  >
+                    {isLoading ? (
+                      <div className="flex items-center justify-center">
+                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Creating Account...
+                      </div>
+                    ) : isSuccess ? (
+                      <div className="flex items-center justify-center">
+                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        Registration Successful!
+                      </div>
+                    ) : (
+                      "Create Account"
+                    )}
+                  </motion.button>
 
-  {isSuccess && (
-    <motion.p
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="text-center text-sm text-green-600"
-    >
-      Redirecting to profile setup...
-    </motion.p>
-  )}
-</div>
+                  {isSuccess && (
+                    <motion.p
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="text-center text-sm text-green-600"
+                    >
+                      Redirecting to profile setup...
+                    </motion.p>
+                  )}
+                </div>
               </form>
 
-              <p className="text-center text-gray-600">
-                Already have an account?{" "}
-                <Link
-                  href="/login"
-                  className="text-purple-600 hover:text-purple-500 font-medium"
-                >
-                  Sign In
-                </Link>
-              </p>
+              <div className="space-y-4 pt-4">
+                <p className="text-center text-gray-600">
+                  Already have an account?{" "}
+                  <Link
+                    href="/login"
+                    className="text-purple-600 hover:text-purple-500 font-medium"
+                  >
+                    Sign In
+                  </Link>
+                </p>
 
-              <div className="pt-6 text-center">
-                <Link
-                  href="/register-doctor"
-                  className="text-purple-600 hover:text-purple-500 font-medium"
-                >
-                  Register as a Doctor
-                </Link>
+                <div className="text-center">
+                  <Link
+                    href="/register-doctor"
+                    className="text-purple-600 hover:text-purple-500 font-medium"
+                  >
+                    Register as a Doctor
+                  </Link>
+                </div>
               </div>
             </div>
           </motion.div>
 
+          {/* Image Section */}
           <motion.div
-            className="relative hidden md:block"
+            className="relative hidden md:block h-full"
             variants={floatingAnimation}
             animate="animate"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-purple-600/90 to-purple-500/90" />
-            <Image
-              src="/images/motherhood.jpg"
-              alt="Motherhood"
-              width={800}
-              height={1000}
-              className="object-cover w-full h-full"
-            />
+            <div className="relative h-full">
+              <Image
+                src="/images/motherhood.jpg"
+                alt="Motherhood"
+                layout="fill"
+                objectFit="cover"
+                quality={100}
+                priority
+              />
+            </div>
 
+            {/* Floating Elements */}
             <motion.div
               className="absolute top-10 right-10 bg-white p-3 rounded-xl shadow-lg"
               variants={floatingAnimation}
@@ -339,7 +342,7 @@ const RegisterForm = () => {
           </motion.div>
         </div>
       </div>
-    </section>
+    </div>
   );
 };
 
