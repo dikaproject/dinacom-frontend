@@ -10,6 +10,7 @@ interface Message {
   sender: 'user' | 'bot';
   timestamp: Date;
   status: 'sending' | 'sent' | 'error';
+  sources?: string[]; // Add sources to message interface
 }
 
 const PregnaAI = () => {
@@ -17,6 +18,7 @@ const PregnaAI = () => {
   const [newMessage, setNewMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [apiKey] = useState('inth_bediuekuefBKUSDWtbDWigU886DSBjkkbh'); // Demo key
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -24,6 +26,22 @@ const PregnaAI = () => {
 
   useEffect(scrollToBottom, [messages]);
 
+  // Add typing animation helper
+  const typeMessage = (text: string, callback: (typedText: string) => void) => {
+    let index = 0;
+    const speed = 20; // Typing speed in milliseconds
+
+    const type = () => {
+      if (index < text.length) {
+        callback(text.slice(0, index + 1));
+        index++;
+        setTimeout(type, speed);
+      }
+    };
+    type();
+  };
+
+  // Modify handleSend to include typing animation and sources
   const handleSend = async () => {
     if (!newMessage.trim()) return;
 
@@ -39,18 +57,60 @@ const PregnaAI = () => {
     setNewMessage('');
     setIsTyping(true);
 
-    // Simulate AI response
-    setTimeout(() => {
-      const botMessage: Message = {
+    try {
+      const response = await fetch('http://localhost:8000/v1/health/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey
+        },
+        body: JSON.stringify({
+          question: newMessage,
+          version: 'ITHAI-1.0' // Using demo version
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      const data = await response.json();
+      
+      // Create temporary message for typing animation
+      const tempBotMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: "I'm here to help you with your pregnancy journey. What would you like to know?",
+        text: '',
         sender: 'bot',
         timestamp: new Date(),
-        status: 'sent'
+        status: 'sent',
+        sources: data.sources
       };
-      setMessages(prev => [...prev, botMessage]);
+
+      setMessages(prev => [...prev, tempBotMessage]);
+
+      // Animate the typing
+      typeMessage(data.answer, (typedText) => {
+        setMessages(prev => prev.map(msg =>
+          msg.id === tempBotMessage.id
+            ? { ...msg, text: typedText }
+            : msg
+        ));
+      });
+
+    } catch (error) {
+      console.error('Error:', error);
+      // Handle error appropriately
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: "Maaf, terjadi kesalahan dalam memproses pesan Anda. Silakan coba lagi.",
+        sender: 'bot',
+        timestamp: new Date(),
+        status: 'error'
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
       setIsTyping(false);
-    }, 2000);
+    }
   };
 
   return (
@@ -58,14 +118,26 @@ const PregnaAI = () => {
       <div className="max-w-4xl mx-auto">
         {/* Chat Container */}
         <div className="bg-white rounded-xl shadow-lg overflow-hidden h-[calc(100vh-6rem)] sm:h-[700px] flex flex-col">
-          {/* Chat Header */}
+          {/* Chat Header with Disclaimer */}
           <div className="bg-purple-600 text-white px-4 sm:px-6 py-4 flex-none">
             <h1 className="text-lg sm:text-xl font-semibold">PregnaAI Assistant</h1>
             <p className="text-purple-200 text-xs sm:text-sm">Your 24/7 pregnancy companion</p>
+            <div className="mt-2 text-xs text-purple-200 border-t border-purple-500 pt-2">
+              ⚠️ AI Assistant Disclaimer: Responses are AI-generated and should not replace professional medical advice.
+            </div>
           </div>
 
           {/* Messages Container */}
           <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 bg-gray-50">
+            {/* Welcome Message */}
+            <div className="bg-purple-50 border border-purple-100 rounded-lg p-4 mb-4">
+              <p className="text-purple-800 text-sm">
+                👋 Welcome! I'm your AI pregnancy assistant. While I can provide information and support,
+                please remember that I'm not a substitute for professional medical care. Always consult
+                with healthcare providers for medical decisions.
+              </p>
+            </div>
+
             <AnimatePresence>
               {messages.map((message) => (
                 <motion.div
@@ -83,6 +155,18 @@ const PregnaAI = () => {
                     }`}
                   >
                     <p className="text-[15px] break-words">{message.text}</p>
+                    {message.sources && message.sources.length > 0 && (
+                      <div className="mt-2 pt-2 border-t border-gray-200">
+                        <p className="text-xs text-gray-500 font-medium">Sources:</p>
+                        <ul className="mt-1 space-y-1">
+                          {message.sources.map((source, index) => (
+                            <li key={index} className="text-xs text-gray-500">
+                              {source}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                     <p
                       className={`text-xs mt-1 ${
                         message.sender === 'user' ? 'text-purple-200' : 'text-gray-500'

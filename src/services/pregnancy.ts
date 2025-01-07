@@ -6,7 +6,13 @@ import {
   DailyCheckup,
   NutritionLog,
   ExerciseLog,
-  AIRecommendation
+  AIRecommendation,
+  NutritionAnalysis,
+  ReminderSettings,
+  ProfileUpdateData,
+  PasswordUpdateData,
+  UpdateResponse,
+  HealthInsightResponse
 } from '@/types/pregnancy';
 
 export const pregnancyService = {
@@ -32,6 +38,30 @@ export const pregnancyService = {
         throw new Error(error.response.data.message);
       }
       throw new Error('Failed to fetch pregnancy profile');
+    }
+  },
+
+  updateProfile: async (profileData: ProfileUpdateData): Promise<UpdateResponse> => {
+    try {
+      const response = await api.put<UpdateResponse>('/settings/profile', profileData);
+      return response.data;
+    } catch (error) {
+      if (error instanceof AxiosError && error.response?.data) {
+        throw new Error(error.response.data.message);
+      }
+      throw new Error('Failed to update profile');
+    }
+  },
+
+  updatePassword: async (passwordData: PasswordUpdateData): Promise<UpdateResponse> => {
+    try {
+      const response = await api.put<UpdateResponse>('/settings/password', passwordData);
+      return response.data;
+    } catch (error) {
+      if (error instanceof AxiosError && error.response?.data) {
+        throw new Error(error.response.data.message);
+      }
+      throw new Error('Failed to update password');
     }
   },
 
@@ -85,6 +115,18 @@ export const pregnancyService = {
     }
   },
 
+    analyzeFoodNutrition: async (description: string): Promise<NutritionAnalysis> => {
+    try {
+      const response = await api.post('/pregnancy/nutrition/analyze', { description });
+      return response.data;
+    } catch (error) {
+      if (error instanceof AxiosError && error.response?.data) {
+        throw new Error(error.response.data.message);
+      }
+      throw new Error('Failed to analyze food nutrition');
+    }
+  },
+
   // Exercise Tracking
   createExerciseLog: async (exerciseData: ExerciseLog): Promise<ExerciseLog> => {
     try {
@@ -122,4 +164,30 @@ export const pregnancyService = {
       throw error;
     }
   },
+
+  getHealthInsights: async (): Promise<HealthInsightResponse> => {
+    try {
+      const response = await api.post<HealthInsightResponse>('/pregnancy/ai-recommendation/insights');
+      return response.data;
+    } catch (error) {
+      if (error instanceof AxiosError && error.response?.data) {
+        throw new Error(error.response.data.message);
+      }
+      throw new Error('Failed to get health insights');
+    }
+  },
+
+  updateReminderSettings: async (settings: ReminderSettings): Promise<UpdateResponse> => {
+    try {
+      const response = await api.put<UpdateResponse>('/pregnancy/reminder/settings', settings);
+      return response.data;
+    } catch (error) {
+      if (error instanceof AxiosError && error.response?.data) {
+        throw new Error(error.response.data.message);
+      }
+      throw new Error('Failed to update reminder settings');
+    }
+  },
+
+  
 };

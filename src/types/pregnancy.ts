@@ -30,22 +30,37 @@ export interface DailyCheckup {
 }
 
 export interface NutritionLog {
-  mealType: string;
+  id?: string;
+  profileId: string;
+  date: Date;
+  mealType: 'BREAKFAST' | 'LUNCH' | 'DINNER' | 'SNACK';
   foodItems: string[];
-  totalCalories: number;
-  totalProtein: number;
-  totalCarbs: number;
-  totalFat: number;
-  totalFolate: number;
-  totalIron: number;
+  portions: number[];
+  calories: number;
+  protein: number;
+  carbs: number;
+  fats: number;
+  notes?: string;
+  createdAt?: Date;
 }
 
+export interface NutritionAnalysis {
+  calories: number;
+  protein: number;
+  carbs: number;
+  fats: number;
+  explanation: string;
+}
 export interface ExerciseLog {
+  id?: string;
+  date?: string;
   activityType: string;
+  customActivity?: string; // Add this
   duration: number;
   intensity: string;
   heartRate?: number;
   notes?: string;
+  createdAt?: string;
 }
 
 export interface AIRecommendation {
@@ -57,7 +72,64 @@ export interface AIRecommendation {
   message: string;
 }
 
+export interface AIAnalysis {
+  type: 'free' | 'pro';
+  analysis: string;
+  recommendation: {
+    nutrition: string;
+    exercise: string;
+    health: string;
+    nextSteps: string;
+  };
+  lastAnalysis?: Date;
+  remainingUsage: number;
+}
+
+export interface AnalyzeStatus {
+  remainingFree: number;
+  lastProAnalysis: string | null;
+  canUsePro: boolean;
+}
+
 export interface PregnancyResponse {
   message: string;
   profile: PregnancyProfile;
 }
+
+export interface ReminderSettings {
+  isWhatsappActive: boolean;
+  reminderTime: string;
+}
+
+export interface ProfileUpdateData {
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  address?: string;
+}
+
+export interface PasswordUpdateData {
+  currentPassword: string;
+  newPassword: string;
+}
+
+export interface UpdateResponse {
+  success: boolean;
+  message: string;
+  user?: ProfileUpdateData;
+}
+
+export interface HealthInsightResponse {
+  success: boolean;
+  analysis: {
+    overallStatus: string;
+    nutritionAnalysis: string;
+    nutritionRecommendations: string[];
+    exerciseEvaluation: string;
+    exerciseSuggestions: string[];
+    warningSignsToWatch: string[];
+    weeklyRecommendations: string[];
+    currentWeek: number;
+  };
+}
+
