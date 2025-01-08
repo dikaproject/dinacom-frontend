@@ -4,15 +4,8 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FiSearch } from 'react-icons/fi';
 import Link from 'next/link';
-
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-  category: string;
-  image: string;
-  description: string;
-}
+import { Product } from '@/types/shop';
+import { shopService } from '@/services/shop';
 
 const Shop = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -20,33 +13,32 @@ const Shop = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [sortBy, setSortBy] = useState('default');
+  const [error, setError] = useState<string | null>(null);
 
-  // Mock data
-  const mockProducts = [
-    {
-      id: '1',
-      name: 'Prenatal Vitamins',
-      price: 299000,
-      category: 'Supplements',
-      image: '/products/vitamins.jpg',
-      description: 'Essential vitamins for pregnancy'
-    },
-    // Add more products...
-  ];
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      const data = await shopService.getAllProducts();
+      setProducts(data);
+      setError(null);
+    } catch (err) {
+      setError('Failed to fetch products');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    setTimeout(() => {
-      setProducts(mockProducts);
-      setLoading(false);
-    }, 1000);
+    fetchProducts();
   }, []);
 
-  const categories = ['all', 'Supplements', 'Skincare', 'Clothing', 'Equipment'];
+  const categories = ['all', ...new Set(products.map(p => p.category?.name || ''))];
 
   const filteredProducts = products
     .filter(product => {
-      const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
+      const matchesSearch = product.title.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesCategory = selectedCategory === 'all' || product.category?.name === selectedCategory;
       return matchesSearch && matchesCategory;
     })
     .sort((a, b) => {
@@ -67,6 +59,12 @@ const Shop = () => {
             Essential products for your pregnancy journey
           </p>
         </div>
+
+        {error && (
+          <div className="text-red-500 text-center mb-4">
+            {error}
+          </div>
+        )}
 
         {/* Search and Filters */}
         <div className="mb-8 flex flex-col sm:flex-row gap-4">
@@ -103,20 +101,18 @@ const Shop = () => {
         </div>
 
         {/* Product Grid */}
-        {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {loading ? (
+            [1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
               <div key={i} className="animate-pulse">
                 <div className="bg-gray-200 h-48 rounded-lg mb-4" />
                 <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
                 <div className="h-4 bg-gray-200 rounded w-1/2" />
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {filteredProducts.map((product) => (
-              <Link href={`/shop/${product.id}`} key={product.id}>
+            ))
+          ) : (
+            filteredProducts.map((product) => (
+              <Link href={`/pregnashop/${product.id}`} key={product.id}>
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -125,14 +121,14 @@ const Shop = () => {
                 >
                   <div className="relative h-48">
                     <img
-                      src={product.image}
-                      alt={product.name}
+                      src={`/uploads/${product.thumbnail}`}
+                      alt={product.title}
                       className="w-full h-full object-cover"
                     />
                   </div>
                   <div className="p-4">
                     <h3 className="font-semibold text-gray-800 mb-2">
-                      {product.name}
+                      {product.title}
                     </h3>
                     <p className="text-purple-600 font-medium">
                       Rp {product.price.toLocaleString()}
@@ -140,9 +136,9 @@ const Shop = () => {
                   </div>
                 </motion.div>
               </Link>
-            ))}
-          </div>
-        )}
+            ))
+          )}
+        </div>
       </div>
     </div>
   );
