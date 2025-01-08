@@ -5,31 +5,33 @@ import { useRouter } from 'next/navigation';
 import { FiSave, FiArrowLeft } from 'react-icons/fi';
 import Link from 'next/link';
 import PageWrapper from '@/components/PageWrapper';
+import { productCategoryService } from '@/services/productCategory';
 
 const AddCategory = () => {
   const router = useRouter();
   const [formData, setFormData] = useState({
     name: '',
-    description: ''
+    slug: ''
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError('');
-
+  
     try {
-      // Add API call here
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+      await productCategoryService.create({
+        name: formData.name,
+        slug: formData.name.toLowerCase().replace(/\s+/g, '-')
+      });
       router.push('/admin/categories');
-    } catch {
-      setError('Failed to create category');
-        } finally {
+    } catch (error) {
+      console.error('Failed to create category:', error);
+    } finally {
       setIsLoading(false);
     }
   };
+  
 
   return (
     <PageWrapper>
@@ -51,12 +53,6 @@ const AddCategory = () => {
             {/* Form */}
             <div className="bg-white rounded-lg shadow-md">
               <form onSubmit={handleSubmit} className="p-6 space-y-6">
-                {error && (
-                  <div className="p-4 bg-red-50 text-red-600 rounded-lg">
-                    {error}
-                  </div>
-                )}
-
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Category Name
@@ -67,18 +63,6 @@ const AddCategory = () => {
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-900"
                     required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Description
-                  </label>
-                  <textarea
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    rows={4}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-900"
                   />
                 </div>
 

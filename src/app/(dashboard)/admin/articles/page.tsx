@@ -1,31 +1,37 @@
 // pages/admin/articles/page.tsx
 "use client"
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FiPlus, FiEdit2, FiTrash2, FiSearch } from 'react-icons/fi';
 import Link from 'next/link';
-import Image from 'next/image';
 import PageWrapper from '@/components/PageWrapper';
+import { articleService } from '@/services/article';
+import { Article } from '@/types/article';
 
 const ArticlesList = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [articles, setArticles] = useState<Article[]>([]);
 
-  // Mock data
-  const articles = [
-    {
-      id: 1,
-      thumbnail: '/articles/article1.jpg',
-      title: 'Pregnancy Health Tips',
-      slug: 'pregnancy-health-tips',
-      content: 'Essential tips for a healthy pregnancy...',
-      category: 'Health & Wellness',
-      createdAt: '2024-03-15'
-    }
-  ];
+  useEffect(() => {
+    const fetchArticles = async () => {
+      try {
+        const data = await articleService.getAll();
+        setArticles(data);
+      } catch (error) {
+        console.error('Error fetching articles:', error);
+      }
+    };
+
+    fetchArticles();
+  }, []);
 
   const handleDelete = async (id: number) => {
     if (window.confirm('Are you sure you want to delete this article?')) {
-      // Add delete API call
-      console.log(`Deleting article with id: ${id}`);
+      try {
+        await articleService.delete(id.toString());
+        setArticles(articles.filter(article => article.id !== id));
+      } catch (error) {
+        console.error('Error deleting article:', error);
+      }
     }
   };
 
@@ -76,7 +82,7 @@ const ArticlesList = () => {
                     <td className="px-6 py-4">
                       <div className="flex items-center">
                         <div className="h-16 w-24 flex-shrink-0">
-                          <Image
+                          <img
                             src={article.thumbnail}
                             alt={article.title}
                             width={96}

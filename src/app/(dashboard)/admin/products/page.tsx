@@ -1,32 +1,53 @@
 // pages/admin/products/page.tsx
 "use client"
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FiPlus, FiEdit2, FiTrash2, FiSearch } from 'react-icons/fi';
 import Link from 'next/link';
-import Image from 'next/image';
 import PageWrapper from '@/components/PageWrapper';
+import { productService } from '@/services/product'; // Gunakan productService
+import { Product } from '@/types/product';
 
 const ProductsList = () => {
+  const [products, setProducts] = useState<Product[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Mock data
-  const products = [
-    {
-      id: 1,
-      thumbnail: '/products/product1.jpg',
-      title: 'Prenatal Vitamins',
-      slug: 'prenatal-vitamins',
-      description: 'Essential vitamins for pregnancy',
-      productStatus: 'In Stock',
-      price: 299000,
-      category: 'Supplements'
+  const loadProducts = async (search?: string) => {
+    try {
+      setIsLoading(true);
+      const data = await productService.getAll(); // Panggil getAll dari productService
+      setProducts(
+        search
+          ? data.filter((product) =>
+              product.title.toLowerCase().includes(search.toLowerCase())
+            )
+          : data
+      );
+    } catch (error) {
+      console.error('Error loading products:', error);
+    } finally {
+      setIsLoading(false);
     }
-  ];
+  };
 
-  const handleDelete = async (id: number) => {
-    if (window.confirm(`Are you sure you want to delete the product with id ${id}?`)) {
-      // Add delete API call
-      console.log(`Deleting product with id ${id}`);
+  useEffect(() => {
+    loadProducts();
+  }, []);
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+    loadProducts(value);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (window.confirm('Are you sure you want to delete this product?')) {
+      try {
+        await productService.delete(id); // Panggil delete dari productService
+        await loadProducts();
+      } catch (error) {
+        console.error('Error deleting product:', error);
+      }
     }
   };
 
@@ -48,7 +69,7 @@ const ProductsList = () => {
                 type="text"
                 placeholder="Search products..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={handleSearch}
                 className="w-full sm:w-80 pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-900"
               />
             </div>
@@ -78,7 +99,7 @@ const ProductsList = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="h-10 w-10 flex-shrink-0">
-                          <Image
+                          <img
                             src={product.thumbnail}
                             alt={product.title}
                             width={40}
@@ -98,7 +119,7 @@ const ProductsList = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {product.category}
+                      {product.category?.name || 'Uncategorized'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       Rp {product.price.toLocaleString()}
