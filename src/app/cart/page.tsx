@@ -1,7 +1,7 @@
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import PageWrapper from '@/components/PageWrapper';
-import Cart from '@/components/section/cart/cart';
+import Cart from '@/components/section/cart/Cart';
 
 export default function cart() {
   return (
