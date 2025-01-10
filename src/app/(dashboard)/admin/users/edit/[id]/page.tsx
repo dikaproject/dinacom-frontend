@@ -1,6 +1,5 @@
-// pages/admin/users/add/page.tsx
-"use client";
-import { useState } from 'react';
+"use client"
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { FiSave, FiArrowLeft } from 'react-icons/fi';
 import Link from 'next/link';
@@ -8,38 +7,51 @@ import PageWrapper from '@/components/PageWrapper';
 import { userService } from '@/services/user';
 import { UserRole, UserFormData } from '@/types/user';
 
-const AddUser = () => {
+const EditUser = ({ params }: { params: { id: string } }) => {
   const router = useRouter();
   const [formData, setFormData] = useState<UserFormData>({
     email: '',
-    password: '',
-    role: UserRole.USER,
+    password: '', // Optional for edit
+    role: UserRole.USER
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const user = await userService.getById(params.id);
+        setFormData({
+          email: user.email,
+          password: '', // Don't show existing password
+          role: user.role
+        });
+      } catch (err) {
+        console.error('Error fetching user:', err);
+        setError('Failed to fetch user data');
+      }
+    };
+
+    fetchUser();
+  }, [params.id]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.email || !formData.password) {
-      setError('Please fill in all required fields');
-      return;
-    }
-
     setIsLoading(true);
     setError('');
 
     try {
-      const userData = {
+      const updateData = {
         email: formData.email.trim().toLowerCase(),
-        password: formData.password,
         role: formData.role,
+        ...(formData.password ? { password: formData.password } : {}) // Only include password if provided
       };
 
-      await userService.create(userData);
+      await userService.update(params.id, updateData);
       router.push('/admin/users');
     } catch (error: any) {
-      console.error('Create user error:', error);
-      setError(error?.response?.data?.message || 'Failed to create user');
+      console.error('Update user error:', error);
+      setError(error?.response?.data?.message || 'Failed to update user');
     } finally {
       setIsLoading(false);
     }
@@ -58,8 +70,8 @@ const AddUser = () => {
               >
                 <FiArrowLeft className="mr-2" /> Back to Users
               </Link>
-              <h1 className="text-2xl font-bold text-gray-900">Add User</h1>
-              <p className="text-gray-600">Create a new user account</p>
+              <h1 className="text-2xl font-bold text-gray-900">Edit User</h1>
+              <p className="text-gray-600">Update user information</p>
             </div>
 
             {/* Form */}
@@ -71,7 +83,7 @@ const AddUser = () => {
                   </div>
                 )}
 
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <div className="grid grid-cols-1 gap-6">
                   {/* Email Input */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -81,26 +93,21 @@ const AddUser = () => {
                       type="email"
                       required
                       value={formData.email}
-                      onChange={(e) =>
-                        setFormData({ ...formData, email: e.target.value })
-                      }
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-700"
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent"
                     />
                   </div>
 
-                  {/* Password Input */}
+                  {/* Password Input (Optional for edit) */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Password <span className="text-red-500">*</span>
+                      New Password <span className="text-gray-400">(leave blank to keep current)</span>
                     </label>
                     <input
                       type="password"
-                      required
                       value={formData.password}
-                      onChange={(e) =>
-                        setFormData({ ...formData, password: e.target.value })
-                      }
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-700"
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent"
                     />
                   </div>
 
@@ -112,15 +119,11 @@ const AddUser = () => {
                     <select
                       required
                       value={formData.role}
-                      onChange={(e) =>
-                        setFormData({ ...formData, role: e.target.value as UserRole })
-                      }
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-700"
+                      onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}
+                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent"
                     >
                       {Object.values(UserRole).map((role) => (
-                        <option key={role} value={role}>
-                          {role}
-                        </option>
+                        <option key={role} value={role}>{role}</option>
                       ))}
                     </select>
                   </div>
@@ -140,7 +143,7 @@ const AddUser = () => {
                     className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center disabled:opacity-50"
                   >
                     <FiSave className="mr-2" />
-                    {isLoading ? 'Creating...' : 'Create User'}
+                    {isLoading ? 'Saving...' : 'Save Changes'}
                   </button>
                 </div>
               </form>
@@ -152,4 +155,4 @@ const AddUser = () => {
   );
 };
 
-export default AddUser;
+export default EditUser;

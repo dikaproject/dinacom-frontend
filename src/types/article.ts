@@ -1,10 +1,23 @@
 export interface Article {
+  id: string;
+  thumbnail: string;
+  title: string;
+  content: string;
+  slug: string;
+  categories: {
     id: string;
-    thumbnail: string;
-    title: string;
-    content: string;
+    name: string;
     slug: string;
-    articleCategory: string[];
-  }
-  
-  
+  }[];
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface ArticleFormData {
+  title: string;
+  content: string;
+  slug: string;
+  thumbnail?: File;
+  categories: string[];
+}
+

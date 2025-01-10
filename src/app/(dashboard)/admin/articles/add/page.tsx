@@ -1,87 +1,107 @@
-// pages/admin/articles/edit/[id]/page.tsx
-"use client"
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
-import { FiSave, FiArrowLeft, FiUpload, FiX } from 'react-icons/fi';
-import Link from 'next/link';
-import Image from 'next/image';
-import PageWrapper from '@/components/PageWrapper';
+"use client";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { FiSave, FiArrowLeft, FiUpload, FiX } from "react-icons/fi";
+import Link from "next/link";
+import Image from "next/image";
+import PageWrapper from "@/components/PageWrapper";
+import { articleService } from "@/services/article";
+import { articleCategoryService } from "@/services/articleCategory";
+import type { ArticleCategory } from "@/types/articleCategory";
 
-const EditArticle = ({ params }: { params: { id: string } }) => {
+const AddArticle = () => {
   const router = useRouter();
+  const [categories, setCategories] = useState<ArticleCategory[]>([]);
   const [formData, setFormData] = useState({
-    title: '',
-    slug: '',
-    content: '',
-    category: ''
+    title: "",
+    content: "",
+    categories: [] as string[],
+    slug: "",
   });
   const [thumbnail, setThumbnail] = useState<File | null>(null);
-  const [thumbnailPreview, setThumbnailPreview] = useState('');
+  const [thumbnailPreview, setThumbnailPreview] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-
-  // Mock categories
-  const categories = [
-    { id: 1, name: 'Health & Wellness' },
-    { id: 2, name: 'Nutrition' },
-    { id: 3, name: 'Pregnancy Tips' },
-  ];
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    const fetchArticle = async () => {
-      setIsLoading(true);
+    const fetchCategories = async () => {
       try {
-        // Mock API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Simulate fetched data
-        setFormData({
-          title: 'Sample Article',
-          slug: 'sample-article',
-          content: 'Sample content...',
-          category: 'Health & Wellness'
-        });
-        setThumbnailPreview('/articles/sample.jpg');
-      } catch {
-        setError('Failed to fetch article');
-      } finally {
-        setIsLoading(false);
+        const data = await articleCategoryService.getAll();
+        if (data) {
+          setCategories(data);
+        } else {
+          setError('No categories found');
+        }
+      } catch (err) {
+        console.error('Error fetching categories:', err);
+        setError('Failed to fetch categories');
       }
     };
+    fetchCategories();
+  }, []);
 
-    fetchArticle();
-  }, [params.id]);
+  const generateSlug = (title: string) => {
+    return title
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, "") // Remove special characters
+      .replace(/\s+/g, "-") // Replace spaces with dashes
+      .trim();
+  };
+
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const title = e.target.value;
+    setFormData({
+      ...formData,
+      title,
+      slug: generateSlug(title),
+    });
+  };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (file.size > 10 * 1024 * 1024) {
+        setError("Image size should be less than 10MB");
+        return;
+      }
       setThumbnail(file);
-      setThumbnailPreview(URL.createObjectURL(file));
+      const objectUrl = URL.createObjectURL(file);
+      setThumbnailPreview(objectUrl);
+      
+      return () => URL.revokeObjectURL(objectUrl);
     }
+  };
+
+  const handleCategoriesChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedOptions = Array.from(e.target.selectedOptions, (option) => option.value);
+    setFormData({
+      ...formData,
+      categories: selectedOptions,
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!thumbnail) {
+      setError("Please upload a thumbnail image");
+      return;
+    }
+    if (formData.categories.length === 0) {
+      setError("Please select at least one category");
+      return;
+    }
+
     setIsLoading(true);
-    setError('');
+    setError("");
 
     try {
-      const formDataToSend = new FormData();
-      formDataToSend.append('title', formData.title);
-      formDataToSend.append('slug', formData.slug);
-      formDataToSend.append('content', formData.content);
-      formDataToSend.append('category', formData.category);
-      
-      if (thumbnail) {
-        formDataToSend.append('thumbnail', thumbnail);
-      }
-
-      // Add API call here
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      router.push('/admin/articles');
-    } catch {
-      setError('Failed to update article');
+      await articleService.create({
+        ...formData,
+        thumbnail,
+      });
+      router.push("/admin/articles");
+    } catch (error: any) {
+      setError(error?.response?.data?.message || "Failed to create article");
     } finally {
       setIsLoading(false);
     }
@@ -100,17 +120,17 @@ const EditArticle = ({ params }: { params: { id: string } }) => {
               >
                 <FiArrowLeft className="mr-2" /> Back to Articles
               </Link>
-              <h1 className="text-2xl font-bold text-gray-900">Edit Article</h1>
-              <p className="text-gray-600">Update article content and details</p>
+              <h1 className="text-2xl font-bold text-gray-900">Add New Article</h1>
+              <p className="text-gray-600">
+                Create a new article with thumbnail and categories
+              </p>
             </div>
 
             {/* Form */}
             <div className="bg-white rounded-lg shadow-md">
               <form onSubmit={handleSubmit} className="p-6 space-y-6">
                 {error && (
-                  <div className="p-4 bg-red-50 text-red-600 rounded-lg">
-                    {error}
-                  </div>
+                  <div className="p-4 bg-red-50 text-red-600 rounded-lg">{error}</div>
                 )}
 
                 {/* Thumbnail Upload */}
@@ -121,20 +141,19 @@ const EditArticle = ({ params }: { params: { id: string } }) => {
                   <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg">
                     <div className="space-y-1 text-center">
                       {thumbnailPreview ? (
-                        <div className="relative w-64 h-40 mx-auto">
-                          <Image
+                        <div className="relative w-full h-48 mx-auto">
+                          <img
                             src={thumbnailPreview}
-                            alt="Preview"
-                            fill
-                            className="rounded-lg object-cover"
+                            alt="Thumbnail preview"
+                            className="rounded-lg object-cover w-full h-full"
                           />
                           <button
                             type="button"
                             onClick={() => {
                               setThumbnail(null);
-                              setThumbnailPreview('');
+                              setThumbnailPreview("");
                             }}
-                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
                           >
                             <FiX className="w-4 h-4" />
                           </button>
@@ -143,7 +162,7 @@ const EditArticle = ({ params }: { params: { id: string } }) => {
                         <>
                           <FiUpload className="mx-auto h-12 w-12 text-gray-400" />
                           <div className="flex text-sm text-gray-600">
-                            <label className="relative cursor-pointer bg-white rounded-md font-medium text-purple-600 hover:text-purple-500">
+                            <label className="relative cursor-pointer bg-white rounded-md font-medium text-purple-600 hover:text-purple-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-purple-500">
                               <span>Upload a file</span>
                               <input
                                 type="file"
@@ -153,107 +172,95 @@ const EditArticle = ({ params }: { params: { id: string } }) => {
                               />
                             </label>
                           </div>
-                          <p className="text-xs text-gray-500">PNG, JPG up to 10MB</p>
+                          <p className="text-xs text-gray-500">
+                            PNG, JPG up to 10MB
+                          </p>
                         </>
                       )}
                     </div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Title
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.title}
-                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-900"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Slug
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.slug}
-                      onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-900"
-                    />
-                  </div>
-                </div>
-
+                {/* Title Input */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Content
+                    Article Title
                   </label>
-                  <textarea
+                  <input
+                    type="text"
                     required
-                    value={formData.content}
-                    onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-900"
-                    rows={6}
+                    value={formData.title}
+                    onChange={handleTitleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-700"
+                    placeholder="Enter article title"
                   />
                 </div>
 
+                {/* Slug Input */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Category
+                    Article Slug
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.slug}
+                    readOnly
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 focus:outline-none text-gray-700"
+                  />
+                </div>
+
+                {/* Categories Multiple Select */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Categories
                   </label>
                   <select
-                    required
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-900"
+                    multiple
+                    value={formData.categories}
+                    onChange={handleCategoriesChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent"
                   >
-                    <option value="">Select a category</option>
                     {categories.map((category) => (
-                      <option key={category.id} value={category.name}>
+                      <option key={category.id} value={category.slug} className="text-gray-700">
                         {category.name}
                       </option>
                     ))}
                   </select>
                 </div>
 
-                <div className="flex justify-end">
-                  <motion.button
-                    type="submit"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="inline-flex items-center px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
-                    disabled={isLoading}
+                {/* Content Textarea */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Article Content
+                  </label>
+                  <textarea
+                    required
+                    value={formData.content}
+                    onChange={(e) =>
+                      setFormData({ ...formData, content: e.target.value })
+                    }
+                    rows={10}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-700"
+                    placeholder="Write your article content here..."
+                  />
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex justify-end space-x-4 pt-4">
+                  <Link
+                    href="/admin/articles"
+                    className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
                   >
-                    {isLoading ? (
-                      <svg
-                        className="animate-spin h-5 w-5 mr-3 text-white"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8v8H4z"
-                        ></path>
-                      </svg>
-                    ) : (
-                      <FiSave className="mr-2" />
-                    )}
-                    {isLoading ? 'Saving...' : 'Save Changes'}
-                  </motion.button>
+                    Cancel
+                  </Link>
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center disabled:opacity-50"
+                  >
+                    <FiSave className="mr-2" />
+                    {isLoading ? "Creating..." : "Create Article"}
+                  </button>
                 </div>
               </form>
             </div>
@@ -264,4 +271,4 @@ const EditArticle = ({ params }: { params: { id: string } }) => {
   );
 };
 
-export default EditArticle;
+export default AddArticle;

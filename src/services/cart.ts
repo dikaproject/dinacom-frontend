@@ -1,33 +1,51 @@
 import { CartProduct } from '@/types/cart';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+export const cartService = {
+  getCart: (): CartProduct[] => {
+    if (typeof window === 'undefined') return [];
+    const cart = localStorage.getItem('cart');
+    return cart ? JSON.parse(cart) : [];
+  },
 
-export const getCartProducts = async (userId: string): Promise<CartProduct[]> => {
-  const response = await fetch(`${API_URL}/cart/${userId}`);
-  return response.json();
-};
+  addToCart: (product: any, quantity: number): void => {
+    const cart = cartService.getCart();
+    const existingItem = cart.find(item => item.productId === product.id);
 
-export const addToCart = async (userId: string, productId: string, quantity: number) => {
-  const response = await fetch(`${API_URL}/cart`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ userId, productId, quantity }),
-  });
-  return response.json();
-};
+    if (existingItem) {
+      existingItem.quantity += quantity;
+    } else {
+      cart.push({
+        id: Date.now().toString(),
+        productId: product.id,
+        quantity,
+        product: {
+          id: product.id,
+          title: product.title,
+          price: product.price,
+          thumbnail: product.thumbnail,
+          description: product.description
+        }
+      });
+    }
 
-export const updateCartProduct = async (cartProductId: string, quantity: number) => {
-  const response = await fetch(`${API_URL}/cart/${cartProductId}`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ quantity }),
-  });
-  return response.json();
-};
+    localStorage.setItem('cart', JSON.stringify(cart));
+  },
 
-export const removeFromCart = async (cartProductId: string) => {
-  const response = await fetch(`${API_URL}/cart/${cartProductId}`, {
-    method: 'DELETE',
-  });
-  return response.json();
+  updateQuantity: (productId: string, quantity: number): void => {
+    const cart = cartService.getCart();
+    const updatedCart = cart.map(item => 
+      item.productId === productId ? { ...item, quantity } : item
+    );
+    localStorage.setItem('cart', JSON.stringify(updatedCart));
+  },
+
+  removeFromCart: (productId: string): void => {
+    const cart = cartService.getCart();
+    const updatedCart = cart.filter(item => item.productId !== productId);
+    localStorage.setItem('cart', JSON.stringify(updatedCart));
+  },
+
+  clearCart: (): void => {
+    localStorage.removeItem('cart');
+  }
 };

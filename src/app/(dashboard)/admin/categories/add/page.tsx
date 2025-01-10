@@ -14,24 +14,22 @@ const AddCategory = () => {
     slug: ''
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-  
+    setError('');
+
     try {
-      await productCategoryService.create({
-        name: formData.name,
-        slug: formData.name.toLowerCase().replace(/\s+/g, '-')
-      });
+      await productCategoryService.create(formData);
       router.push('/admin/categories');
-    } catch (error) {
-      console.error('Failed to create category:', error);
+    } catch (error: any) {
+      setError(error?.response?.data?.message || 'Failed to create category');
     } finally {
       setIsLoading(false);
     }
   };
-  
 
   return (
     <PageWrapper>
@@ -53,6 +51,12 @@ const AddCategory = () => {
             {/* Form */}
             <div className="bg-white rounded-lg shadow-md">
               <form onSubmit={handleSubmit} className="p-6 space-y-6">
+                {error && (
+                  <div className="p-4 bg-red-50 text-red-600 rounded-lg">
+                    {error}
+                  </div>
+                )}
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Category Name
@@ -61,6 +65,20 @@ const AddCategory = () => {
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-900"
+                    required
+                  />
+                </div>
+
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Category Slug
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.slug}
+                    onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
                     className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-900"
                     required
                   />

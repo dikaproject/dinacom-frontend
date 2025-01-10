@@ -1,5 +1,5 @@
 import api from './api';
-import { ArticleCategory } from '@/types/articleCategory';
+import { ArticleCategory, ArticleCategoryFormData } from '@/types/articleCategory';
 
 export const articleCategoryService = {
     getAll: async (): Promise<ArticleCategory[]> => {
@@ -22,9 +22,12 @@ export const articleCategoryService = {
         }
     },
 
-    create: async (data: ArticleCategory): Promise<ArticleCategory> => {
+    create: async (data: ArticleCategoryFormData): Promise<ArticleCategory> => {
         try {
-            const response = await api.post('/article-category', data);
+            const response = await api.post('/article-category', {
+                name: data.name,
+                slug: data.slug,
+            });
             return response.data;
         } catch (error) {
             console.error('Error creating category:', error);
@@ -32,9 +35,12 @@ export const articleCategoryService = {
         }
     },
 
-    update: async (id: string, data: ArticleCategory): Promise<ArticleCategory> => {
+    update: async (id: string, data: ArticleCategoryFormData): Promise<ArticleCategory> => {
         try {
-            const response = await api.put(`/article-category/${id}`, data);
+            const response = await api.put(`/article-category/${id}`, {
+                name: data.name,
+                slug: data.slug
+            });
             return response.data;
         } catch (error) {
             console.error('Error updating category:', error);

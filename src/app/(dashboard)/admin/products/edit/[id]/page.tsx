@@ -1,26 +1,61 @@
-// pages/admin/products/add/page.tsx
 "use client"
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { FiSave, FiArrowLeft, FiUpload, FiX } from 'react-icons/fi';
 import Link from 'next/link';
 import Image from 'next/image';
 import PageWrapper from '@/components/PageWrapper';
+import { productService } from '@/services/product';
+import { productCategoryService } from '@/services/productCategory';
+import { ProductCategory } from '@/types/productCategory';
+import { use } from 'react';
 
-const AddProduct = () => {
+interface EditProductProps {
+  params: Promise<{ id: string }>;
+}
+
+const EditProduct = ({ params }: EditProductProps) => {
   const router = useRouter();
+  const { id } = use(params);
+  const [categories, setCategories] = useState<ProductCategory[]>([]);
   const [formData, setFormData] = useState({
     title: '',
     slug: '',
     description: '',
-    productStatus: 'In Stock',
+    productStatus: '',
     price: '',
-    category: '',
+    categoryId: ''
   });
   const [thumbnail, setThumbnail] = useState<File | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [productData, categoriesData] = await Promise.all([
+          productService.getById(id),
+          productCategoryService.getAll()
+        ]);
+
+        setFormData({
+          title: productData.title,
+          slug: productData.slug,
+          description: productData.description,
+          productStatus: productData.productStatus,
+          price: productData.price.toString(),
+          categoryId: productData.categoryId
+        });
+        setThumbnailPreview(productData.thumbnail);
+        setCategories(categoriesData);
+      } catch (error) {
+        setError('Failed to fetch product data');
+      }
+    };
+
+    fetchData();
+  }, [id]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -36,28 +71,19 @@ const AddProduct = () => {
     setError('');
 
     try {
-      // Create FormData to send file
       const formDataToSend = new FormData();
-      formDataToSend.append('title', formData.title);
-      formDataToSend.append('slug', formData.slug);
-      formDataToSend.append('description', formData.description);
-      formDataToSend.append('productStatus', formData.productStatus);
-      formDataToSend.append('price', formData.price);
-      formDataToSend.append('category', formData.category);
+      Object.entries(formData).forEach(([key, value]) => {
+        formDataToSend.append(key, value);
+      });
       
-      // Only append thumbnail if it exists
       if (thumbnail) {
         formDataToSend.append('thumbnail', thumbnail);
       }
 
-      // Add API call here
-      // Example:
-      // await axios.post('/api/products', formDataToSend);
-      
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await productService.update(id, formDataToSend);
       router.push('/admin/products');
-    } catch {
-      setError('Failed to create product');
+    } catch (error: any) {
+      setError(error?.response?.data?.message || 'Failed to update product');
     } finally {
       setIsLoading(false);
     }
@@ -76,8 +102,8 @@ const AddProduct = () => {
               >
                 <FiArrowLeft className="mr-2" /> Back to Products
               </Link>
-              <h1 className="text-2xl font-bold text-gray-900">Add Product</h1>
-              <p className="text-gray-600">Create a new product</p>
+              <h1 className="text-2xl font-bold text-gray-900">Edit Product</h1>
+              <p className="text-gray-600">Update product details</p>
             </div>
 
             {/* Form */}
@@ -172,9 +198,8 @@ const AddProduct = () => {
                       onChange={(e) => setFormData({ ...formData, productStatus: e.target.value })}
                       className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-900"
                     >
-                      <option value="In Stock">In Stock</option>
-                      <option value="Out of Stock">Out of Stock</option>
-                      <option value="Pre Order">Pre Order</option>
+                      <option value="ACTIVE">Active</option>
+                      <option value="UNACTIVE">Unactive</option>
                     </select>
                   </div>
 
@@ -183,14 +208,17 @@ const AddProduct = () => {
                       Category
                     </label>
                     <select
-                      value={formData.category}
-                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                      value={formData.categoryId}
+                      onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
                       className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-900"
+                      required
                     >
                       <option value="">Select Category</option>
-                      <option value="Supplements">Supplements</option>
-                      <option value="Skincare">Skincare</option>
-                      <option value="Baby Care">Baby Care</option>
+                      {categories.map((category) => (
+                        <option key={category.id} value={category.id}>
+                          {category.name}
+                        </option>
+                      ))}
                     </select>
                   </div>
 
@@ -245,4 +273,4 @@ const AddProduct = () => {
   );
 };
 
-export default AddProduct;
+export default EditProduct;

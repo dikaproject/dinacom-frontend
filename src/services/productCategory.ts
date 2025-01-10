@@ -22,7 +22,7 @@ export const productCategoryService = {
         }
     },
 
-    create: async (data: ProductCategory): Promise<ProductCategory> => {
+    create: async (data: { name: string; slug: string }): Promise<ProductCategory> => {
         try {
             const response = await api.post('/product-category', data);
             return response.data;

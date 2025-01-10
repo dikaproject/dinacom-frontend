@@ -5,32 +5,39 @@ import { useRouter } from 'next/navigation';
 import { FiSave, FiArrowLeft } from 'react-icons/fi';
 import Link from 'next/link';
 import PageWrapper from '@/components/PageWrapper';
+import { articleCategoryService } from '@/services/articleCategory';
+import { ArticleCategory } from '@/types/articleCategory';
 
 const EditCategory = ({ params }: { params: { id: string } }) => {
   const router = useRouter();
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<ArticleCategory>({
+    id: '',
     name: '',
-    description: ''
+    slug: ''
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    // Fetch category data
-    const fetchData = async () => {
+    const fetchCategory = async () => {
       try {
-        // Add API call here
-        // Mock data for now
-        setFormData({
-          name: 'Sample Category',
-          description: 'Sample Description'
-        });
-      } catch {
+        const category = await articleCategoryService.getById(params.id);
+        setFormData(category);
+      } catch (error) {
         setError('Failed to fetch category');
       }
     };
-    fetchData();
+
+    if (params.id) {
+      fetchCategory();
+    }
   }, [params.id]);
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const name = e.target.value;
+    const slug = name.toLowerCase().replace(/\s+/g, '-');
+    setFormData({ ...formData, name, slug });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,11 +45,10 @@ const EditCategory = ({ params }: { params: { id: string } }) => {
     setError('');
 
     try {
-      // Add API call here
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-      router.push('/admin/categories');
-    } catch {
-      setError('Failed to update category');
+      await articleCategoryService.update(params.id, formData);
+      router.push('/admin/categories-article');
+    } catch (error: any) {
+      setError(error?.response?.data?.message || 'Failed to update category');
     } finally {
       setIsLoading(false);
     }
@@ -53,7 +59,6 @@ const EditCategory = ({ params }: { params: { id: string } }) => {
       <main className="min-h-screen bg-gray-50 py-6">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-2xl mx-auto">
-            {/* Header */}
             <div className="mb-8">
               <Link
                 href="/admin/categories"
@@ -65,7 +70,6 @@ const EditCategory = ({ params }: { params: { id: string } }) => {
               <p className="text-gray-600">Update category details</p>
             </div>
 
-            {/* Form */}
             <div className="bg-white rounded-lg shadow-md">
               <form onSubmit={handleSubmit} className="p-6 space-y-6">
                 {error && (
@@ -81,7 +85,7 @@ const EditCategory = ({ params }: { params: { id: string } }) => {
                   <input
                     type="text"
                     value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    onChange={handleNameChange}
                     className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-900"
                     required
                   />
@@ -89,13 +93,14 @@ const EditCategory = ({ params }: { params: { id: string } }) => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Description
+                    Slug
                   </label>
-                  <textarea
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    rows={4}
+                  <input
+                    type="text"
+                    value={formData.slug}
+                    onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
                     className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-900"
+                    required
                   />
                 </div>
 

@@ -6,6 +6,9 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { Product } from '@/types/shop';
 import { shopService } from '@/services/shop';
+import { cartService } from '@/services/cart';
+import { useRouter } from 'next/navigation';
+// import { toast } from 'react-hot-toast';
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -13,6 +16,7 @@ const ProductDetail = () => {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -33,6 +37,15 @@ const ProductDetail = () => {
       fetchProduct();
     }
   }, [id]);
+
+  const handleAddToCart = async () => {
+    try {
+      await cartService.addToCart(product, quantity);
+      router.push('/cart');
+    } catch (error) {
+      console.error('Failed to add to cart', error);
+    }
+  };
 
   if (loading) {
     return (
@@ -127,15 +140,13 @@ const ProductDetail = () => {
                 </div>
 
                 <motion.button
+                  onClick={handleAddToCart}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="w-full py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center space-x-2"
+                  className="w-full py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center justify-center"
                 >
-                  <FiShoppingCart />
-                  <span
-                   className=" text-white ">
-                    Add to Cart
-                  </span>
+                  <FiShoppingCart className="mr-2" />
+                  <span>Add to Cart</span>
                 </motion.button>
               </div>
             </div>

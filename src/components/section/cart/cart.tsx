@@ -1,30 +1,33 @@
 // pages/cart/page.tsx
 "use client"
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiMinus, FiPlus, FiX, FiArrowLeft, FiShoppingBag } from 'react-icons/fi';
 import Link from 'next/link';
 import Image from 'next/image';
-
-interface CartItem {
-  id: number;
-  title: string;
-  price: number;
-  quantity: number;
-  thumbnail: string;
-}
+import { cartService } from '@/services/cart';
+import { CartProduct } from '@/types/cart';
 
 const Cart = () => {
-  const [cartItems, setCartItems] = useState<CartItem[]>([
-    {
-      id: 1,
-      title: "Prenatal Vitamins",
-      price: 299000,
-      quantity: 1,
-      thumbnail: "/products/vitamins.jpg"
-    },
-    // Add more mock items
-  ]);
+  const [cartItems, setCartItems] = useState<CartProduct[]>([]);
+
+  useEffect(() => {
+    loadCart();
+  }, []);
+
+  const loadCart = () => {
+    const items = cartService.getCart();
+    setCartItems(items);
+  };
+
+  const handleUpdateQuantity = (productId: string, newQuantity: number) => {
+    if (newQuantity === 0) {
+      cartService.removeFromCart(productId);
+    } else {
+      cartService.updateQuantity(productId, newQuantity);
+    }
+    loadCart();
+  };
 
   const shippingCost = 15000;
 

@@ -1,13 +1,13 @@
 export interface CartProduct {
   id: string;
   productId: string;
-  cartId: string;
   quantity: number;
   product: {
     id: string;
-    name: string;
+    title: string;
     price: number;
-    image: string;
+    thumbnail: string;
+    description: string;
   };
 }
 
@@ -15,4 +15,6 @@ export interface Cart {
   id: string;
   userId: string;
   products: CartProduct[];
+  totalItems: number;
+  totalAmount: number;
 }

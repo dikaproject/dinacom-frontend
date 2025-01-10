@@ -1,34 +1,36 @@
-// pages/admin/categories-article/edit/[id]/page.tsx
+// pages/admin/categories/edit/[id]/page.tsx
 "use client"
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { FiSave, FiArrowLeft } from 'react-icons/fi';
 import Link from 'next/link';
 import PageWrapper from '@/components/PageWrapper';
+import { productCategoryService } from '@/services/productCategory';
+import { ProductCategory } from '@/types/productCategory';
 
-const EditCategoryArticle = ({ params }: { params: { id: string } }) => {
+const EditCategory = ({ params }: { params: { id: string } }) => {
   const router = useRouter();
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<ProductCategory>({
+    id: '',
     name: '',
-    description: ''
+    slug: ''
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchCategory = async () => {
       try {
-        // Add API call here
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        setFormData({
-          name: 'Sample Category',
-          description: 'Sample Description'
-        });
-      } catch {
+        const category = await productCategoryService.getById(params.id);
+        setFormData(category);
+      } catch (error) {
         setError('Failed to fetch category');
       }
     };
-    fetchData();
+
+    if (params.id) {
+      fetchCategory();
+    }
   }, [params.id]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -37,11 +39,10 @@ const EditCategoryArticle = ({ params }: { params: { id: string } }) => {
     setError('');
 
     try {
-      // Add API call here
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      router.push('/admin/categories-article');
-    } catch {
-      setError('Failed to update category');
+      await productCategoryService.update(params.id, formData);
+      router.push('/admin/categories');
+    } catch (error: any) {
+      setError(error?.response?.data?.message || 'Failed to update category');
     } finally {
       setIsLoading(false);
     }
@@ -52,19 +53,17 @@ const EditCategoryArticle = ({ params }: { params: { id: string } }) => {
       <main className="min-h-screen bg-gray-50 py-6">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-2xl mx-auto">
-            {/* Header */}
             <div className="mb-8">
               <Link
-                href="/admin/categories-article"
+                href="/admin/categories"
                 className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-4"
               >
                 <FiArrowLeft className="mr-2" /> Back to Categories
               </Link>
-              <h1 className="text-2xl font-bold text-gray-900">Edit Article Category</h1>
+              <h1 className="text-2xl font-bold text-gray-900">Edit Category</h1>
               <p className="text-gray-600">Update category details</p>
             </div>
 
-            {/* Form */}
             <div className="bg-white rounded-lg shadow-md">
               <form onSubmit={handleSubmit} className="p-6 space-y-6">
                 {error && (
@@ -79,37 +78,37 @@ const EditCategoryArticle = ({ params }: { params: { id: string } }) => {
                   </label>
                   <input
                     type="text"
-                    required
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-900"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-900"
+                    required
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Description
+                    Slug
                   </label>
-                  <textarea
+                  <input
+                    type="text"
+                    value={formData.slug}
+                    onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-900"
                     required
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    rows={4}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-900"
                   />
                 </div>
 
-                <div className="flex justify-end space-x-4 pt-4">
+                <div className="flex justify-end space-x-4 pt-6">
                   <Link
-                    href="/admin/categories-article"
-                    className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                    href="/admin/categories"
+                    className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
                   >
                     Cancel
                   </Link>
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 flex items-center"
+                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center disabled:opacity-50"
                   >
                     <FiSave className="mr-2" />
                     {isLoading ? 'Saving...' : 'Save Changes'}
@@ -124,4 +123,4 @@ const EditCategoryArticle = ({ params }: { params: { id: string } }) => {
   );
 };
 
-export default EditCategoryArticle;
+export default EditCategory;

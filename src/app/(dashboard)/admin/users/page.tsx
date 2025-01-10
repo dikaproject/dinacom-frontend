@@ -1,30 +1,60 @@
 // pages/admin/users/page.tsx
-"use client"
-import { useState } from 'react';
-import { FiPlus, FiEdit2, FiTrash2, FiSearch, FiUser } from 'react-icons/fi';
-import Link from 'next/link';
-import PageWrapper from '@/components/PageWrapper';
+"use client";
+import { useState, useEffect } from "react";
+import { FiPlus, FiEdit2, FiTrash2, FiSearch, FiUser } from "react-icons/fi";
+import Link from "next/link";
+import PageWrapper from "@/components/PageWrapper";
+import { userService } from "@/services/user";
+import { User, UserRole } from "@/types/user";
 
 const UsersList = () => {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [users, setUsers] = useState<User[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
-  // Mock data
-  const users = [
-    { 
-      id: 1, 
-      name: 'Jane Doe', 
-      email: 'jane@example.com',
-      role: 'USER',
-      status: 'Active',
-      joinDate: '2024-01-15'
-    },
-    // Add more mock users
-  ];
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const data = await userService.getAll();
+        console.log("Fetched users:", data); 
+        setUsers(data);
+      } catch (err) {
+        console.error(err);
+        setError("Failed to fetch users");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchUsers();
+  }, []);
 
-  const handleDelete = async (id: number) => {
-    if (window.confirm('Are you sure you want to delete this user?')) {
-      // Add delete API call
-      console.log(`Deleting user with id: ${id}`);
+  const handleDelete = async (id: string) => {
+    if (window.confirm("Are you sure you want to delete this user?")) {
+      try {
+        await userService.delete(id);
+        setUsers(users.filter((user) => user.id !== id));
+      } catch (err) {
+        console.error(err);
+        setError("Failed to delete user");
+      }
+    }
+  };
+
+  const filteredUsers = users.filter(
+    (user) =>
+      (user.name?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false) ||
+      (user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false)
+  );
+
+  const getRoleColor = (role: UserRole) => {
+    switch (role) {
+      case UserRole.ADMIN:
+        return "bg-purple-100 text-purple-800";
+      case UserRole.DOCTOR:
+        return "bg-blue-100 text-blue-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
   };
 
@@ -63,15 +93,19 @@ const UsersList = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Join Date</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    User
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Role
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {users.map((user) => (
+                {filteredUsers.map((user) => (
                   <tr key={user.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
@@ -79,23 +113,20 @@ const UsersList = () => {
                           <FiUser className="h-5 w-5 text-purple-600" />
                         </div>
                         <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                          <div className="text-sm text-gray-500">{user.email}</div>
+                          <div className="text-sm text-gray-500">
+                            {user.email || "N/A"}
+                          </div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
+                      <span
+                        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getRoleColor(
+                          user.role
+                        )}`}
+                      >
                         {user.role}
                       </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                        {user.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {user.joinDate}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <Link

@@ -12,11 +12,25 @@ export interface Product {
   title: string;
   slug: string;
   description: string;
-  thumbnail: string;
+  thumbnail?: string;
   price: number;
-  productStatus: string;
+  productStatus: 'ACTIVE' | 'UNACTIVE';
   categoryId: string;
-  category: Category;
-  createdAt: Date;
-  updatedAt: Date;
+  category?: {
+    id: string;
+    name: string;
+    slug: string;
+  };
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface CreateProductDTO {
+  title: string;
+  slug: string;
+  description: string;
+  productStatus: 'ACTIVE' | 'UNACTIVE';
+  price: number;
+  categoryId: string;
+  thumbnail?: File;
 }
