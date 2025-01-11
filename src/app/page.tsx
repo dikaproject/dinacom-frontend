@@ -6,6 +6,7 @@ import Workflow from '@/components/section/Workflow';
 import Faq from '@/components/section/home/Faq';
 import Testimonials from '@/components/section/home/Testimonials';
 import PageWrapper from '@/components/PageWrapper';
+import News from '@/components/section/home/News';
 
 
 export default function Home() {
@@ -14,6 +15,7 @@ export default function Home() {
     <main className="min-h-screen">
       <Navbar />
       <Hero />
+      <News />
       <Features />
       <Workflow />
       <Faq />
