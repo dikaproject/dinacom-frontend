@@ -1,37 +1,74 @@
 import api from './api';
 import { AxiosError } from 'axios';
 import {
-  PregnancyProfile,
   PregnancyResponse,
   DailyCheckup,
   NutritionLog,
   ExerciseLog,
-  AIRecommendation
+  AIRecommendation,
+  NutritionAnalysis,
+  ReminderSettings,
+  PasswordUpdateData,
+  UpdateResponse,
+  HealthInsightResponse
 } from '@/types/pregnancy';
 
 export const pregnancyService = {
   // Profile Management
-  createProfile: async (profileData: PregnancyProfile): Promise<PregnancyResponse> => {
+  createProfile: async (formData: FormData) => {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/pregnancy/profile`, {
+      method: 'POST',
+      credentials: 'include',
+      body: formData, // FormData will automatically set the correct content-type
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to create profile');
+    }
+
+    return response.json();
+  },
+
+  getProfile: async (): Promise<PregnancyResponse> => {
     try {
-      const response = await api.post<PregnancyResponse>('/pregnancy/profile', profileData);
+      const response = await api.get<PregnancyResponse>('/pregnancy/profile');
+      if (!response.data || !response.data.profile) {
+        throw new Error('Invalid profile data received');
+      }
       return response.data;
     } catch (error) {
       if (error instanceof AxiosError && error.response?.data) {
         throw new Error(error.response.data.message);
       }
-      throw new Error('Failed to create pregnancy profile');
+      throw new Error('Failed to fetch pregnancy profile');
     }
   },
 
-  getProfile: async (): Promise<PregnancyProfile> => {
+  updateProfile: async (formData: FormData): Promise<UpdateResponse> => {
     try {
-      const response = await api.get<PregnancyResponse>('/pregnancy/profile');
-      return response.data.profile;
+      const response = await api.put<UpdateResponse>('/pregnancy/profile', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
     } catch (error) {
       if (error instanceof AxiosError && error.response?.data) {
         throw new Error(error.response.data.message);
       }
-      throw new Error('Failed to fetch pregnancy profile');
+      throw new Error('Failed to update profile');
+    }
+  },
+
+  updatePassword: async (passwordData: PasswordUpdateData): Promise<UpdateResponse> => {
+    try {
+      const response = await api.put<UpdateResponse>('/settings/password', passwordData);
+      return response.data;
+    } catch (error) {
+      if (error instanceof AxiosError && error.response?.data) {
+        throw new Error(error.response.data.message);
+      }
+      throw new Error('Failed to update password');
     }
   },
 
@@ -85,6 +122,18 @@ export const pregnancyService = {
     }
   },
 
+    analyzeFoodNutrition: async (description: string): Promise<NutritionAnalysis> => {
+    try {
+      const response = await api.post('/pregnancy/nutrition/analyze', { description });
+      return response.data;
+    } catch (error) {
+      if (error instanceof AxiosError && error.response?.data) {
+        throw new Error(error.response.data.message);
+      }
+      throw new Error('Failed to analyze food nutrition');
+    }
+  },
+
   // Exercise Tracking
   createExerciseLog: async (exerciseData: ExerciseLog): Promise<ExerciseLog> => {
     try {
@@ -122,4 +171,30 @@ export const pregnancyService = {
       throw error;
     }
   },
+
+  getHealthInsights: async (): Promise<HealthInsightResponse> => {
+    try {
+      const response = await api.post<HealthInsightResponse>('/pregnancy/ai-recommendation/insights');
+      return response.data;
+    } catch (error) {
+      if (error instanceof AxiosError && error.response?.data) {
+        throw new Error(error.response.data.message);
+      }
+      throw new Error('Failed to get health insights');
+    }
+  },
+
+  updateReminderSettings: async (settings: ReminderSettings): Promise<UpdateResponse> => {
+    try {
+      const response = await api.put<UpdateResponse>('/pregnancy/reminder/settings', settings);
+      return response.data;
+    } catch (error) {
+      if (error instanceof AxiosError && error.response?.data) {
+        throw new Error(error.response.data.message);
+      }
+      throw new Error('Failed to update reminder settings');
+    }
+  },
+
+  
 };

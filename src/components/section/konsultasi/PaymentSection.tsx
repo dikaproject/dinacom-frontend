@@ -1,252 +1,384 @@
-// PaymentSection.tsx
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
-import { useState } from 'react';
+
+// Add MidtransStatus import at the top
+import { useState, useContext } from 'react';
+import { motion } from 'framer-motion';
+import { ConsultationContext } from './Konsultasi';
+import { ConsultationContextType } from '@/types/consultation';
+import { PaymentMethod, PaymentDetails } from '@/types/payment';
+import { paymentService } from '@/services/payment';
+import { toast } from 'react-hot-toast';
 import Image from 'next/image';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useForm } from 'react-hook-form';
-import { FiCreditCard, FiLock } from 'react-icons/fi';
+import MidtransStatus from './MidtransStatus'; // Add this import
+import { 
+  FiCreditCard, 
+  FiDollarSign, 
+  FiUpload,
+  FiCheckCircle 
+} from 'react-icons/fi';
+
+interface MidtransStatusProps {
+  status: 'success' | 'pending' | 'error';
+  transaction?: {
+    orderId: string;
+    amount: number;
+    date: string;
+  };
+}
+
 
 interface PaymentSectionProps {
   nextStep: () => void;
   prevStep: () => void;
 }
 
-const PaymentSection = ({ nextStep, prevStep }: PaymentSectionProps) => {
-  const [selectedMethod, setSelectedMethod] = useState('');
+export default function PaymentSection({ nextStep, prevStep }: PaymentSectionProps) {
+  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('BANK_TRANSFER');
   const [isProcessing, setIsProcessing] = useState(false);
-  
-  const {
-    register,
-    handleSubmit,
-    formState: { errors }
-  } = useForm();
+  const [paymentProof, setPaymentProof] = useState<File | null>(null);
+  const { consultationData, setConsultationData } = useContext(ConsultationContext) as ConsultationContextType;
+  const [paymentDetails, setPaymentDetails] = useState<PaymentDetails | null>(null);
+  const [midtransStatus, setMidtransStatus] = useState<'success' | 'pending' | 'error' | null>(null);
+const [transactionDetails, setTransactionDetails] = useState<MidtransStatusProps['transaction']>(undefined);
 
-  const paymentMethods = [
-    {
-      id: 'credit-card',
-      name: 'Credit Card',
-      icon: '/icons/credit-card.png',
-      description: 'Pay securely with your credit card'
-    },
-    {
-      id: 'bank-transfer',
-      name: 'Bank Transfer',
-      icon: '/icons/bank.png',
-      description: 'Direct bank transfer'
-    },
-    {
-      id: 'e-wallet',
-      name: 'E-Wallet',
-      icon: '/icons/wallet.png',
-      description: 'Pay with your e-wallet'
+  const handleCreatePayment = async () => {
+    try {
+      setIsProcessing(true);
+      const response = await paymentService.createPayment(
+        consultationData.consultationId!,
+        selectedMethod
+      );
+      
+      setPaymentDetails(response.data);
+      setConsultationData({
+        ...consultationData,
+        paymentMethod: selectedMethod
+      });
+      
+      if (selectedMethod === 'MIDTRANS' && response.data.snapToken) {
+        window.snap?.pay(response.data.snapToken, {
+          onSuccess: () => nextStep(),
+          onPending: () => {},
+          onError: () => toast.error('Payment failed'),
+          onClose: () => {}
+        });
+      }
+    } catch (err) {
+      console.error('Payment processing error:', err);
+      toast.error('Failed to process payment');
+    } finally {
+      setIsProcessing(false);
     }
-  ];
-
-  const priceBreakdown = {
-    consultation: 350000,
-    serviceCharge: 15000,
-    tax: 36500,
-    total: 401500
   };
 
+  const formatIDR = (amount: number) => {
+    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(amount);
 
-const handlePayment = async (): Promise<void> => {
-    setIsProcessing(true);
-    // Simulate payment processing
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    setIsProcessing(false);
-    nextStep();
-};
+  }
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setPaymentProof(file);
+    }
+  };
+
+  const handleUploadProof = async () => {
+    if (!paymentProof || !paymentDetails?.payment?.id) {
+      toast.error('Please select a file to upload');
+      return;
+    }
+  
+    try {
+      setIsProcessing(true);
+      const response = await paymentService.uploadPaymentProof(
+        paymentDetails.payment.id,
+        paymentProof
+      );
+  
+      if (response.message) {
+        toast.success(response.message);
+        nextStep();
+      }
+    } catch (err) {
+      console.error('Payment proof upload error:', err);
+      toast.error('Failed to upload payment proof');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleMidtransPayment = async () => {
+    try {
+      setIsProcessing(true);
+      // Change to use specific Midtrans endpoint
+      const response = await paymentService.processMidtransPayment(
+        consultationData.consultationId!
+      );
+      
+      if (!response.data?.snapToken) {
+        throw new Error('Failed to get Midtrans token');
+      }
+
+
+      if (typeof window.snap === 'undefined') {
+        toast.error('Midtrans is not initialized');
+        return;
+      }
+
+          
+      window.snap.pay(response.data.snapToken, {
+        onSuccess: function(result: any) {
+          setMidtransStatus('success');
+          setTransactionDetails({
+            orderId: result.order_id,
+            amount: result.gross_amount,
+            date: new Date().toLocaleString()
+          });
+          nextStep();
+        },
+        onPending: function(result: any) {
+          setMidtransStatus('pending');
+          setTransactionDetails({
+            orderId: result.order_id,
+            amount: result.gross_amount,
+            date: new Date().toLocaleString()
+          });
+        },
+        onError: function(result: any) {
+          setMidtransStatus('error');
+          toast.error('Payment failed: ' + (result.message || 'Unknown error'));
+        },
+        onClose: function() {
+          setIsProcessing(false);
+          if (!midtransStatus) {
+            toast.error('Payment cancelled');
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Midtrans payment error:', error);
+      toast.error('Failed to initialize payment');
+      setMidtransStatus('error');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleSelectMidtrans = () => {
+    setSelectedMethod('MIDTRANS');
+  };
 
   return (
-    <div className="space-y-8">
-      {/* Price Breakdown */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-purple-50 p-6 rounded-lg"
-      >
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">
-          Price Breakdown
-        </h3>
-        <div className="space-y-3">
-          <div className="flex justify-between text-gray-600">
-            <span>Consultation Fee</span>
-            <span>Rp {priceBreakdown.consultation.toLocaleString()}</span>
-          </div>
-          <div className="flex justify-between text-gray-600">
-            <span>Service Charge</span>
-            <span>Rp {priceBreakdown.serviceCharge.toLocaleString()}</span>
-          </div>
-          <div className="flex justify-between text-gray-600">
-            <span>Tax</span>
-            <span>Rp {priceBreakdown.tax.toLocaleString()}</span>
-          </div>
-          <div className="h-px bg-purple-200 my-2" />
-          <div className="flex justify-between font-semibold text-gray-800">
-            <span>Total</span>
-            <span>Rp {priceBreakdown.total.toLocaleString()}</span>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Payment Methods */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-800">
-          Select Payment Method
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {paymentMethods.map((method) => (
-            <motion.button
-              key={method.id}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => setSelectedMethod(method.id)}
-              className={`p-4 rounded-lg border ${
-                selectedMethod === method.id
-                  ? 'border-purple-500 bg-purple-50'
-                  : 'border-gray-200 hover:border-purple-200'
-              }`}
-            >
-              <Image
-                src={method.icon}
-                alt={method.name}
-                width={48}
-                height={48}
-                className="mx-auto mb-2"
-              />
-              <h4 className="font-medium text-gray-800">{method.name}</h4>
-              <p className="text-sm text-gray-500">{method.description}</p>
-            </motion.button>
-          ))}
+    <>
+    {midtransStatus ? (
+      <MidtransStatus 
+        status={midtransStatus} 
+        transaction={transactionDetails}
+      />
+    ) : (
+    <div className="max-w-4xl mx-auto space-y-8">
+      {/* Consultation Summary */}
+      <div className="bg-purple-50 p-6 rounded-lg">
+        <h3 className="font-medium text-purple-800 mb-4">Consultation Summary</h3>
+        <div className="space-y-2 text-purple-600">
+          <p>Doctor: Dr. {consultationData.doctorName}</p>
+          <p>Type: {consultationData.type === 'ONLINE' ? 'Online Consultation' : 'Hospital Visit'}</p>
+          <p>Schedule: {new Date(consultationData.schedule!).toLocaleString()}</p>
         </div>
       </div>
 
-      {/* Payment Form */}
-      <AnimatePresence>
-        {selectedMethod === 'credit-card' && (
-          <motion.form
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            onSubmit={handleSubmit(handlePayment)}
-            className="space-y-4"
+      {/* Price Breakdown */}
+      {paymentDetails && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white p-6 rounded-lg border border-gray-200"
+        >
+          <h3 className="font-medium text-gray-800 mb-4">Price Breakdown</h3>
+          <div className="space-y-3">
+            <div className="flex justify-between">
+              <span>Consultation Fee</span>
+              <span>{formatIDR(paymentDetails.breakdown.consultationFee)}</span>
+            </div>
+            <div className="flex justify-between text-gray-600">
+  <span>Platform Fee</span>
+  <span>{formatIDR(paymentDetails.breakdown.platformFee)}</span>
+</div>
+            <div className="flex justify-between text-gray-600">
+              <span>Tax</span>
+              <span>{formatIDR(paymentDetails.breakdown.tax)}</span>
+            </div>
+            <div className="border-t pt-2 flex justify-between font-medium">
+              <span>Total Amount</span>
+              <span>{formatIDR(paymentDetails.breakdown.total)}</span>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Payment Method Selection */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-gray-800">Select Payment Method</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setSelectedMethod('BANK_TRANSFER')}
+            className={`p-6 rounded-lg border ${
+              selectedMethod === 'BANK_TRANSFER'
+                ? 'border-purple-500 bg-purple-50'
+                : 'border-gray-200 hover:border-purple-200'
+            }`}
           >
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Card Number
+            <FiDollarSign className="w-8 h-8 mx-auto mb-3 text-purple-600" />
+            <h4 className="font-medium text-gray-800">Bank Transfer</h4>
+            <p className="text-sm text-gray-500 mt-1">Manual bank transfer</p>
+          </motion.button>
+
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setSelectedMethod('QRIS')}
+            className={`p-6 rounded-lg border ${
+              selectedMethod === 'QRIS'
+                ? 'border-purple-500 bg-purple-50'
+                : 'border-gray-200 hover:border-purple-200'
+            }`}
+          >
+            <Image
+              src="/icons/qris.png"
+              alt="QRIS"
+              width={32}
+              height={32}
+              className="mx-auto mb-3"
+            />
+            <h4 className="font-medium text-gray-800">QRIS</h4>
+            <p className="text-sm text-gray-500 mt-1">Pay with any QRIS-supported app</p>
+          </motion.button>
+
+          <motion.button
+  whileHover={{ scale: 1.02 }}
+  whileTap={{ scale: 0.98 }}
+  onClick={handleSelectMidtrans}
+  className={`p-6 rounded-lg border ${
+    selectedMethod === 'MIDTRANS'
+      ? 'border-purple-500 bg-purple-50'
+      : 'border-gray-200 hover:border-purple-200'
+  }`}
+>
+  <FiCreditCard className="w-8 h-8 mx-auto mb-3 text-purple-600" />
+  <h4 className="font-medium text-gray-800">Credit Card / E-Wallet</h4>
+  <p className="text-sm text-gray-500 mt-1">Via Midtrans</p>
+</motion.button>
+        </div>
+      </div>
+
+      {/* Payment Instructions */}
+      {paymentDetails?.guide && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white p-6 rounded-lg border border-gray-200"
+        >
+          <h4 className="font-medium text-gray-800 mb-4">Payment Instructions</h4>
+          
+          {selectedMethod === 'BANK_TRANSFER' && paymentDetails.guide.bankInfo && (
+            <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+              <p className="font-medium text-gray-700">{paymentDetails.guide.bankInfo.bankName}</p>
+              <p className="text-gray-600">{paymentDetails.guide.bankInfo.accountNumber}</p>
+              <p className="text-gray-600">{paymentDetails.guide.bankInfo.accountHolder}</p>
+            </div>
+          )}
+
+          {selectedMethod === 'QRIS' && paymentDetails.qrisUrl && (
+            <div className="mb-4 flex justify-center">
+              <Image
+                src={`${process.env.NEXT_PUBLIC_API_URL}${paymentDetails.qrisUrl}`}
+                alt="QRIS Code"
+                width={200}
+                height={200}
+                className="rounded-lg"
+              />
+            </div>
+          )}
+
+          <ol className="space-y-2">
+            {paymentDetails.guide.steps.map((step, index) => (
+              <li key={index} className="flex text-gray-700 items-start">
+                <span className="font-medium text-gray-700 mr-2">{index + 1}.</span>
+                {step}
+              </li>
+            ))}
+          </ol>
+
+          {selectedMethod === 'BANK_TRANSFER' && (
+            <div className="mt-6 space-y-4">
+              <p className="text-sm text-gray-600">Upload payment proof after completing the transfer:</p>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileUpload}
+                className="hidden"
+                id="payment-proof"
+              />
+              <label
+                htmlFor="payment-proof"
+                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer"
+              >
+                <FiUpload className="mr-2" />
+                Choose File
               </label>
-              <div className="mt-1 relative">
-                <FiCreditCard className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <input
-                  type="text"
-                  {...register('cardNumber', {
-                    required: 'Card number is required',
-                    pattern: {
-                      value: /^[0-9]{16}$/,
-                      message: 'Invalid card number'
-                    }
-                  })}
-                  className="pl-10 w-full border border-gray-200 rounded-lg text-gray-800 py-2 focus:ring-2 focus:ring-purple-400 focus:border-transparent"
-                  placeholder="1234 5678 9012 3456"
-                />
-              </div>
-              {errors.cardNumber && (
-                <p className="mt-1 text-sm text-red-600">
-                  {errors.cardNumber.message as string}
+              {paymentProof && (
+                <p className="text-sm text-green-600 flex items-center">
+                  <FiCheckCircle className="mr-2" />
+                  {paymentProof.name}
                 </p>
               )}
             </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Expiry Date
-                </label>
-                <input
-                  type="text"
-                  {...register('expiryDate', {
-                    required: 'Expiry date is required',
-                    pattern: {
-                      value: /^(0[1-9]|1[0-2])\/([0-9]{2})$/,
-                      message: 'Invalid format (MM/YY)'
-                    }
-                  })}
-                  className="mt-1 w-full border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500"
-                  placeholder="MM/YY"
-                />
-                {errors.expiryDate && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {errors.expiryDate.message as string}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  CVV
-                </label>
-                <input
-                  type="text"
-                  {...register('cvv', {
-                    required: 'CVV is required',
-                    pattern: {
-                      value: /^[0-9]{3,4}$/,
-                      message: 'Invalid CVV'
-                    }
-                  })}
-                  className="mt-1 w-full border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500"
-                  placeholder="123"
-                />
-                {errors.cvv && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {errors.cvv.message as string}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div className="flex items-center text-sm text-gray-500 mt-4">
-              <FiLock className="mr-2" />
-              Your payment information is secure and encrypted
-            </div>
-          </motion.form>
-        )}
-      </AnimatePresence>
+          )}
+        </motion.div>
+      )}
 
       {/* Navigation Buttons */}
       <div className="flex justify-between pt-6">
         <button
           onClick={prevStep}
-          className="px-6 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors"
+          disabled={isProcessing}
+          className="px-6 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
         >
           Back
         </button>
-        <button
-          onClick={handleSubmit(handlePayment)}
-          disabled={!selectedMethod || isProcessing}
-          className={`px-6 py-2 rounded-lg transition-colors flex items-center ${
-            isProcessing
-              ? 'bg-purple-400 cursor-not-allowed'
-              : 'bg-purple-600 hover:bg-purple-700'
-          } text-white`}
-        >
-          {isProcessing ? (
-            <>
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                className="w-5 h-5 border-2 border-white border-t-transparent rounded-full mr-2"
-              />
-              Processing...
-            </>
-          ) : (
-            'Pay Now'
-          )}
-        </button>
+
+        {!paymentDetails ? (
+          <button
+            onClick={handleCreatePayment}
+            disabled={isProcessing}
+            className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
+          >
+            {isProcessing ? 'Processing...' : 'Process Payment'}
+          </button>
+        ) : selectedMethod === 'BANK_TRANSFER' ? (
+          <button
+            onClick={handleUploadProof}
+            disabled={!paymentProof || isProcessing}
+            className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
+          >
+            {isProcessing ? 'Uploading...' : 'Submit Payment Proof'}
+          </button>
+        ) : selectedMethod === 'MIDTRANS' ? (
+          <button
+            onClick={handleMidtransPayment}
+            disabled={isProcessing}
+            className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
+          >
+            {isProcessing ? 'Processing...' : 'Pay with Midtrans'}
+          </button>
+        ) : null}
       </div>
     </div>
+    )}
+    </> 
   );
-};
-
-export default PaymentSection;
+}

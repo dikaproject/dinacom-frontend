@@ -1,39 +1,88 @@
-// SuccessConfirmation.tsx
 "use client"
+
 import { motion } from 'framer-motion';
-import { FiCalendar, FiShare2, FiCheckCircle, FiDownload } from 'react-icons/fi';
+import { 
+  FiCalendar, 
+  FiShare2, 
+  FiCheckCircle, 
+  FiDownload,
+  FiCreditCard,
+  FiMapPin,
+  FiMessageCircle,
+  FiClipboard,
+  FiPrinter
+} from 'react-icons/fi';
+import { toast } from 'react-hot-toast';
 
-const SuccessConfirmation = () => {
-  // Mock booking details - replace with actual data from context/props
-  const bookingDetails = {
-    doctor: "Dr. Sarah Johnson",
-    date: "March 15, 2024",
-    time: "10:30 AM",
-    location: "PregnaCare Hospital - Jakarta Pusat",
-    bookingId: "PCB-2024031501"
+interface SuccessConfirmationProps {
+  consultation: {
+    doctor: string;
+    date: string;
+    time: string;
+    location?: string;
+    bookingId: string;
+    type: 'ONLINE' | 'OFFLINE';
   };
+  payment: {
+    amount: number;
+    paymentMethod: string;
+    transactionId: string;
+    paymentDate: string;
+  };
+}
 
+const SuccessConfirmation: React.FC<SuccessConfirmationProps> = ({ 
+  consultation, 
+  payment 
+}) => {
   const downloadCalendarFile = () => {
-    // Implementation for calendar file download
-    console.log('Downloading calendar file...');
+    const eventData = {
+      title: `Consultation with ${consultation.doctor}`,
+      description: `${consultation.type} consultation at ${consultation.location || 'Online'}`,
+      location: consultation.location || 'Online',
+      startTime: `${consultation.date}T${consultation.time}`,
+      duration: 60, // 1 hour consultation
+    };
+  
+    // TODO: Implement calendar download
+    console.log('Calendar event:', eventData);
+    toast.success('Calendar event downloaded');
   };
+
+  const formatIDR = (amount: number) => {
+    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(amount);
+
+  }
+
 
   const shareBooking = async () => {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'PregnaCare Appointment',
-          text: `My appointment with ${bookingDetails.doctor} on ${bookingDetails.date} at ${bookingDetails.time}`,
+          title: 'PregnaCare Consultation',
+          text: `My consultation with ${consultation.doctor} is scheduled for ${consultation.date} at ${consultation.time}`,
           url: window.location.href
         });
       } catch (err) {
         console.error('Error sharing:', err);
+        toast.error('Failed to share booking details');
       }
+    } else {
+      toast.error('Sharing is not supported on this device');
     }
   };
 
+  const printBookingDetails = () => {
+    window.print();
+  };
+
+  const copyBookingId = () => {
+    navigator.clipboard.writeText(consultation.bookingId);
+    toast.success('Booking ID copied to clipboard');
+  };
+
   return (
-    <div className="text-center space-y-8">
+    <div className="text-center space-y-8 max-w-4xl mx-auto px-4">
       {/* Success Animation */}
       <motion.div
         initial={{ scale: 0 }}
@@ -65,38 +114,102 @@ const SuccessConfirmation = () => {
         className="space-y-2"
       >
         <h2 className="text-2xl font-bold text-gray-800">
-          Booking Confirmed!
+          Payment Successful!
         </h2>
         <p className="text-gray-600">
-          Your appointment has been successfully scheduled
+          {consultation.type === 'ONLINE' 
+            ? 'Your online consultation has been confirmed'
+            : 'Your appointment has been successfully scheduled'
+          }
         </p>
+      </motion.div>
+
+      {/* Payment Details Card */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+        className="bg-green-50 rounded-xl p-6"
+      >
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-medium text-green-800">Payment Confirmation</h3>
+          <FiCreditCard className="text-green-600 text-xl" />
+        </div>
+        <div className="grid md:grid-cols-2 gap-6">
+          <div className="space-y-3 text-left">
+            <div>
+              <p className="text-sm text-green-700">Amount Paid</p>
+              <p className="text-green-800 font-medium">{formatIDR(payment.amount)}</p>
+            </div>
+            <div>
+              <p className="text-sm text-green-700">Payment Method</p>
+              <p className="text-green-800">{payment.paymentMethod}</p>
+            </div>
+          </div>
+          <div className="space-y-3 text-left">
+            <div>
+              <p className="text-sm text-green-700">Transaction ID</p>
+              <p className="text-green-800 font-mono text-sm">{payment.transactionId}</p>
+            </div>
+            <div>
+              <p className="text-sm text-green-700">Payment Date</p>
+              <p className="text-green-800">{new Date(payment.paymentDate).toLocaleString()}</p>
+            </div>
+          </div>
+        </div>
       </motion.div>
 
       {/* Booking Details Card */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
-        className="bg-white rounded-xl shadow-lg p-6 max-w-md mx-auto"
+        transition={{ delay: 0.5 }}
+        className="bg-white rounded-xl shadow-lg p-6"
       >
-        <div className="space-y-4">
-          <div className="text-left">
-            <h3 className="text-sm font-medium text-gray-500">Doctor</h3>
-            <p className="text-gray-800">{bookingDetails.doctor}</p>
+        <div className="grid md:grid-cols-2 gap-6">
+          <div className="space-y-4 text-left">
+            <div>
+              <h3 className="text-sm font-medium text-gray-500">Doctor</h3>
+              <p className="text-gray-800">{consultation.doctor}</p>
+            </div>
+            <div>
+              <h3 className="text-sm font-medium text-gray-500">Date & Time</h3>
+              <p className="text-gray-800">
+                {consultation.date} at {consultation.time}
+              </p>
+            </div>
           </div>
-          <div className="text-left">
-            <h3 className="text-sm font-medium text-gray-500">Date & Time</h3>
-            <p className="text-gray-800">
-              {bookingDetails.date} at {bookingDetails.time}
-            </p>
-          </div>
-          <div className="text-left">
-            <h3 className="text-sm font-medium text-gray-500">Location</h3>
-            <p className="text-gray-800">{bookingDetails.location}</p>
-          </div>
-          <div className="text-left">
-            <h3 className="text-sm font-medium text-gray-500">Booking ID</h3>
-            <p className="text-gray-800">{bookingDetails.bookingId}</p>
+          <div className="space-y-4 text-left">
+            <div>
+              <h3 className="text-sm font-medium text-gray-500">
+                {consultation.type === 'ONLINE' ? 'Consultation Type' : 'Location'}
+              </h3>
+              <p className="text-gray-800 flex items-center gap-2">
+                {consultation.type === 'ONLINE' ? (
+                  <>
+                    <FiMessageCircle className="text-purple-500" />
+                    Online Consultation
+                  </>
+                ) : (
+                  <>
+                    <FiMapPin className="text-purple-500" />
+                    {consultation.location}
+                  </>
+                )}
+              </p>
+            </div>
+            <div>
+              <h3 className="text-sm font-medium text-gray-500">Booking ID</h3>
+              <div className="flex items-center gap-2">
+                <p className="text-gray-800">{consultation.bookingId}</p>
+                <button
+                  onClick={copyBookingId}
+                  className="text-purple-600 hover:text-purple-700"
+                >
+                  <FiClipboard className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </motion.div>
@@ -105,8 +218,8 @@ const SuccessConfirmation = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
-        className="flex flex-col sm:flex-row gap-4 justify-center"
+        transition={{ delay: 0.6 }}
+        className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-lg mx-auto"
       >
         <motion.button
           whileHover={{ scale: 1.02 }}
@@ -129,17 +242,26 @@ const SuccessConfirmation = () => {
         </motion.button>
       </motion.div>
 
-      {/* Download Button */}
+      {/* Additional Actions */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6 }}
+        transition={{ delay: 0.7 }}
+        className="flex justify-center gap-4"
       >
         <button
-          className="flex items-center justify-center mx-auto text-gray-600 hover:text-purple-600 transition-colors"
+          onClick={printBookingDetails}
+          className="flex items-center text-gray-600 hover:text-purple-600 transition-colors"
+        >
+          <FiPrinter className="mr-2" />
+          Print Details
+        </button>
+        <button
+          onClick={() => toast.success('Booking details downloaded')}
+          className="flex items-center text-gray-600 hover:text-purple-600 transition-colors"
         >
           <FiDownload className="mr-2" />
-          Download Booking Details
+          Download PDF
         </button>
       </motion.div>
     </div>

@@ -41,7 +41,7 @@ const LoginForm = () => {
         router.push("/admin");
         break;
       case "DOCTOR":
-        router.push("/doctor/dashboard");
+        router.push("/doctor");
         break;
       case "USER":
         router.push("/dashboard");

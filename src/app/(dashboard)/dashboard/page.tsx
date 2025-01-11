@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 import { useAuth } from "@/context/AuthContext";
 import { useState, useEffect } from "react";
@@ -13,8 +14,61 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { pregnancyService } from "@/services/pregnancy";
-import { PregnancyProfile, DailyCheckup } from "@/types/pregnancy";
+import { PregnancyProfile, DailyCheckup, AIResponse } from "@/types/pregnancy";
 import DashboardSkeleton from "@/components/loading/DashboardSkeleton";
+import { useCountdown } from "@/hooks/useCountdown";
+
+const getNextCheckupTime = (lastCheckup: DailyCheckup | null): Date => {
+  const today = new Date();
+  
+  if (!lastCheckup || !lastCheckup.createdAt) {
+    return today;
+  }
+  
+  const lastCheckupDate = new Date(lastCheckup.createdAt);
+  const nextCheckupDate = new Date(lastCheckupDate);
+  nextCheckupDate.setDate(nextCheckupDate.getDate() + 1);
+  nextCheckupDate.setHours(0, 0, 0, 0);
+  
+  return nextCheckupDate;
+};
+
+const getCheckupStatus = (checkups: DailyCheckup[]): {
+  canCheckup: boolean;
+  message: string;
+  nextCheckup: Date;
+} => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const lastCheckup = checkups[0];
+  
+  if (!lastCheckup || !lastCheckup.createdAt) {
+    return {
+      canCheckup: true,
+      message: "Daily checkup needed",
+      nextCheckup: today
+    };
+  }
+
+  const lastCheckupDate = new Date(lastCheckup.createdAt);
+  lastCheckupDate.setHours(0, 0, 0, 0);
+
+  if (lastCheckupDate.getTime() === today.getTime()) {
+    const nextCheckup = getNextCheckupTime(lastCheckup);
+    return {
+      canCheckup: false,
+      message: "Checkup completed for today",
+      nextCheckup
+    };
+  }
+
+  return {
+    canCheckup: true,
+    message: "Daily checkup needed",
+    nextCheckup: today
+  };
+};
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -22,23 +76,43 @@ export default function DashboardPage() {
   const [profile, setProfile] = useState<PregnancyProfile | null>(null);
   const [checkups, setCheckups] = useState<DailyCheckup[]>([]);
   const [aiRecommendations, setAiRecommendations] = useState<string[]>([]);
+  const [checkupStatus, setCheckupStatus] = useState({
+    canCheckup: true,
+    message: "",
+    nextCheckup: new Date()
+  });
 
-   useEffect(() => {
+  const { hours, minutes } = useCountdown(checkupStatus.nextCheckup);
+
+  useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const profileData = await pregnancyService.getProfile();
-        setProfile(profileData);
+        const [profileResponse, checkupsData] = await Promise.all([
+          pregnancyService.getProfile(),
+          pregnancyService.getDailyCheckups()
+        ]);
         
+        const profileData = profileResponse.profile;
+        setProfile(profileData);
+        setCheckups(checkupsData);
+        
+        const status = getCheckupStatus(checkupsData);
+        setCheckupStatus(status);
+    
         if (profileData?.pregnancyWeek) {
           const healthData = {
             trimester: profileData.trimester,
             week: profileData.pregnancyWeek,
           };
           
-          const aiResponse = await pregnancyService.getAIRecommendations(healthData);
-          // Use analysis instead of recommendation
-          if (aiResponse && aiResponse.analysis) {
-            setAiRecommendations([aiResponse.analysis]);
+          const aiResponse = await pregnancyService.getAIRecommendations(healthData) as unknown as AIResponse;
+          if (aiResponse?.analysis) {
+            const allRecommendations = [
+              ...(aiResponse.analysis.weeklyRecommendations || []),
+              ...(aiResponse.analysis.nutritionRecommendations || []),
+              ...(aiResponse.analysis.exerciseSuggestions || [])
+            ].filter(Boolean);
+            setAiRecommendations(allRecommendations);
           }
         } 
       } catch (error) {
@@ -88,10 +162,19 @@ export default function DashboardPage() {
     },
     {
       label: "Trimester",
-      value: getTrimmester(profile?.pregnancyWeek || 0),
+      value: profile?.trimester 
+        ? profile.trimester.split('_')[0].toLowerCase()
+        : getTrimmester(profile?.pregnancyWeek || 0),
       icon: TrendingUp,
     },
-    { label: "Next Checkup", value: "3 days", icon: Activity },
+    {
+      label: "Next Checkup",
+      value: checkupStatus.canCheckup 
+        ? "Due now"
+        : `in ${hours}h ${minutes}m`,
+      icon: Activity,
+      status: checkupStatus.canCheckup ? 'due' : 'upcoming'
+    },
     {
       label: "Baby Size",
       value: getBabySize(profile?.pregnancyWeek || 0),
@@ -128,28 +211,46 @@ export default function DashboardPage() {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-          {stats.map((stat, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className="bg-white p-6 rounded-2xl shadow-lg"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">{stat.label}</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">
-                    {stat.value}
-                  </p>
-                </div>
-                <div className="bg-purple-100 p-3 rounded-full">
-                  <stat.icon className="h-6 w-6 text-purple-600" />
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
+      {stats.map((stat, index) => (
+        <motion.div
+          key={index}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: index * 0.1 }}
+          className="bg-white p-6 rounded-2xl shadow-lg"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">{stat.label}</p>
+              <p className={`text-2xl font-bold mt-1 ${
+                stat.label === "Next Checkup" 
+                  ? stat.status === 'due' 
+                    ? 'text-red-600'
+                    : 'text-green-600'
+                  : 'text-gray-900'
+              }`}>
+                {stat.value}
+              </p>
+            </div>
+            <div className={`p-3 rounded-full ${
+              stat.label === "Next Checkup"
+                ? stat.status === 'due'
+                  ? 'bg-red-100'
+                  : 'bg-green-100'
+                : 'bg-purple-100'
+            }`}>
+              <stat.icon className={`h-6 w-6 ${
+                stat.label === "Next Checkup"
+                  ? stat.status === 'due'
+                    ? 'text-red-600'
+                    : 'text-green-600'
+                  : 'text-purple-600'
+              }`} />
+            </div>
+          </div>
+        </motion.div>
+      ))}
+    </div>
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -227,7 +328,7 @@ export default function DashboardPage() {
                     className="flex items-center justify-between p-3 bg-gray-50 rounded-xl"
                   >
                     <span className="text-sm text-gray-600">
-                      {checkup.weight}kg, BP: {checkup.bloodPressure}
+                      {checkup.weight}kg, BP: {checkup.bloodPressure || "N/A"}
                     </span>
                     <span className="text-xs text-purple-600">
                       {new Date(checkup.createdAt).toLocaleDateString()}
@@ -243,25 +344,25 @@ export default function DashboardPage() {
           </div>
 
           <div className="bg-white p-6 rounded-2xl shadow-lg">
-            <h2 className="text-lg font-semibold text-gray-700 mb-4">Health Tips ( automatic tips by AI )</h2>
-            <div className="space-y-4">
-              {aiRecommendations.length > 0 ? (
-                aiRecommendations.map((tip, index) => (
-                  <motion.div
-                    key={index}
-                    whileHover={{ scale: 1.02 }}
-                    className="p-4 bg-purple-50 rounded-xl"
-                  >
-                    <div className="text-sm text-gray-600">{tip}</div>
-                  </motion.div>
-                ))
-              ) : (
-                <div className="text-center text-gray-500">
-                  No recommendations available
-                </div>
-              )}
-            </div>
-          </div>
+  <h2 className="text-lg font-semibold text-gray-700 mb-4">Health Tips (AI Generated)</h2>
+  <div className="space-y-4">
+    {aiRecommendations.length > 0 ? (
+      aiRecommendations.map((tip, index) => (
+        <motion.div
+          key={index}
+          whileHover={{ scale: 1.02 }}
+          className="p-4 bg-purple-50 rounded-xl"
+        >
+          <div className="text-sm text-gray-600">{tip}</div>
+        </motion.div>
+      ))
+    ) : (
+      <div className="text-center text-gray-500">
+        No recommendations available
+      </div>
+    )}
+  </div>
+</div>
         </div>
 
         {/* Emergency Contact */}

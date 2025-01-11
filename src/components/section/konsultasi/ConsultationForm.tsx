@@ -1,88 +1,136 @@
-// ConsultationForm.tsx
 "use client"
-import { useState } from 'react';
+
+import { useState, useContext } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useForm } from 'react-hook-form';
-import { FiUpload, FiX } from 'react-icons/fi';
+import { ConsultationContext } from './Konsultasi';
+import { ConsultationContextType } from '@/types/consultation';
+import { consultationService } from '@/services/consultation';
+import { toast } from 'react-hot-toast';
 
 interface ConsultationFormProps {
   nextStep: () => void;
   prevStep: () => void;
 }
 
-const ConsultationForm: React.FC<ConsultationFormProps> = ({ nextStep, prevStep }) => {
+interface FormInputs {
+  pregnancyWeek: number;
+  previousPregnancies: number;
+  symptoms: string;
+  concerns: string;
+}
+
+const formSteps = [
+  {
+    title: 'Basic Information',
+    description: 'Tell us about your pregnancy'
+  },
+  {
+    title: 'Symptoms & Concerns',
+    description: 'Share your current condition'
+  }
+];
+
+const ConsultationForm = ({ nextStep, prevStep }: ConsultationFormProps) => {
   const [formStep, setFormStep] = useState(0);
-  const [files, setFiles] = useState<File[]>([]);
-  
+  const { consultationData, setConsultationData } = useContext(ConsultationContext) as ConsultationContextType;
+
   const {
     register,
     handleSubmit,
-    formState: { errors },
-    trigger
-  } = useForm<FormData>({
-    mode: 'onChange'
+    trigger,
+    formState: { errors }
+  } = useForm<FormInputs>({
+    defaultValues: {
+      pregnancyWeek: 1,
+      previousPregnancies: 0,
+      symptoms: '',
+      concerns: ''
+    }
   });
 
-  const formSteps = [
-    { title: "Basic Information", progress: 33 },
-    { title: "Symptoms & Concerns", progress: 66 },
-    { title: "Medical History", progress: 100 }
-  ];
-
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const newFiles = Array.from(event.target.files || []);
-    setFiles(prev => [...prev, ...newFiles]);
-  };
-
-  const removeFile = (index: number) => {
-    setFiles(prev => prev.filter((_, i) => i !== index));
-  };
-
   const goToNext = async () => {
-    const isStepValid = await trigger();
-    if (isStepValid) {
+    const fields = formStep === 0 
+      ? ['pregnancyWeek', 'previousPregnancies'] as const
+      : ['symptoms'] as const;
+
+    const isValid = await trigger(fields);
+    if (isValid) {
       setFormStep(prev => prev + 1);
     }
   };
 
-interface FormData {
-    pregnancyWeek: number;
-    previousPregnancies: number;
-    symptoms: string;
-    concerns?: string;
-    medicalHistory: string;
-}
-
-const onSubmit = (data: FormData) => {
-    console.log({ ...data, files });
-    nextStep();
-};
+  const onSubmit = async (data: FormInputs) => {
+    try {
+      const response = await consultationService.createConsultation({
+        doctorId: consultationData.doctorId,
+        schedule: consultationData.schedule!,
+        type: consultationData.type!,
+        pregnancyWeek: data.pregnancyWeek,
+        previousPregnancies: data.previousPregnancies,
+        symptoms: data.symptoms,
+        concerns: data.concerns || ''
+      });
+  
+      // Update consultation context with ID
+      setConsultationData({
+        ...consultationData,
+        consultationId: response.consultationId
+      });
+  
+      toast.success('Consultation request submitted successfully');
+      nextStep();
+    } catch (error) {
+      toast.error('Failed to submit consultation request');
+      console.error(error);
+    }
+  };
 
   return (
-    <div className="space-y-6">
-      {/* Progress Bar */}
-      <div className="relative pt-1">
-        <div className="flex mb-2 items-center justify-between">
-          <div>
-            <span className="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-purple-600 bg-purple-200">
-              {formSteps[formStep].title}
-            </span>
-          </div>
-          <div className="text-right">
-            <span className="text-xs font-semibold inline-block text-purple-600">
-              {formSteps[formStep].progress}%
-            </span>
-          </div>
-        </div>
-        <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-purple-200">
-          <motion.div
-            initial={{ width: 0 }}
-            animate={{ width: `${formSteps[formStep].progress}%` }}
-            className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-purple-600"
-          />
+    <div className="max-w-3xl mx-auto space-y-8">
+      {/* Doctor Info */}
+      <div className="p-4 bg-purple-50 rounded-lg">
+        <h3 className="font-medium text-purple-800 mb-2">
+          Consultation with Dr. {consultationData.doctorName}
+        </h3>
+        <p className="text-purple-600 text-sm">
+          {consultationData.type === 'ONLINE' ? 'Online Consultation' : 'Hospital Visit'}
+        </p>
+      </div>
+
+      {/* Progress Steps */}
+      <div className="relative">
+        <div className="flex justify-between mb-4">
+          {formSteps.map((step, index) => (
+            <div
+              key={step.title}
+              className={`flex-1 ${index !== formSteps.length - 1 ? 'mr-2' : ''}`}
+            >
+              <div className="relative flex items-center">
+                <div
+                  className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                    formStep >= index
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-gray-200 text-gray-500'
+                  }`}
+                >
+                  {index + 1}
+                </div>
+                <div className="flex-1 ml-4">
+                  <p className={`font-medium ${
+                    formStep >= index ? 'text-purple-600' : 'text-gray-500'
+                  }`}>
+                    {step.title}
+                  </p>
+                  <p className="text-sm text-gray-400">{step.description}</p>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
+      {/* Form */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <AnimatePresence mode="wait">
           {formStep === 0 && (
@@ -90,56 +138,42 @@ const onSubmit = (data: FormData) => {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="space-y-4"
+              className="space-y-6"
             >
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Current Pregnancy Week
                 </label>
                 <input
                   type="number"
                   {...register('pregnancyWeek', {
-                    required: 'This field is required',
-                    min: { value: 1, message: 'Must be at least 1' },
-                    max: { value: 42, message: 'Must be less than 42' }
+                    required: 'Please enter your current pregnancy week',
+                    min: { value: 1, message: 'Week must be at least 1' },
+                    max: { value: 42, message: 'Week cannot exceed 42' }
                   })}
-                  className={`mt-1 block w-full rounded-lg border border-gray-200 text-gray-800 py-2 px-4 focus:ring-2 focus:ring-purple-400 focus:border-transparent ${
-                    errors.pregnancyWeek ? 'border-red-300' : ''
-                  }`}
+                  className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent"
+                  placeholder="Enter week (1-42)"
                 />
                 {errors.pregnancyWeek && (
-                  <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="mt-1 text-sm text-red-600"
-                  >
-                    {errors.pregnancyWeek.message as string}
-                  </motion.p>
+                  <p className="mt-1 text-red-500 text-sm">{errors.pregnancyWeek.message}</p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Previous Pregnancies
                 </label>
                 <input
                   type="number"
                   {...register('previousPregnancies', {
-                    required: 'This field is required',
+                    required: 'Please enter number of previous pregnancies',
                     min: { value: 0, message: 'Cannot be negative' }
                   })}
-                  className={`mt-1 block w-full rounded-lg border border-gray-200 text-gray-800 py-2 px-4 focus:ring-2 focus:ring-purple-400 focus:border-transparent ${
-                    errors.previousPregnancies ? 'border-red-300' : ''
-                  }`}
+                  className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent"
+                  placeholder="Enter number"
                 />
                 {errors.previousPregnancies && (
-                  <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="mt-1 text-sm text-red-600"
-                  >
-                    {errors.previousPregnancies.message as string}
-                  </motion.p>
+                  <p className="mt-1 text-red-500 text-sm">{errors.previousPregnancies.message}</p>
                 )}
               </div>
             </motion.div>
@@ -150,125 +184,33 @@ const onSubmit = (data: FormData) => {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="space-y-4"
+              className="space-y-6"
             >
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Current Symptoms
                 </label>
                 <textarea
                   {...register('symptoms', {
-                    required: 'Please describe your symptoms',
-                    minLength: { value: 20, message: 'Please provide more detail' }
+                    required: 'Please describe your current symptoms'
                   })}
-                  rows={4}
-                  className={`mt-1 block w-full rounded-lg border border-gray-200 text-gray-800 py-2 px-4 focus:ring-2 focus:ring-purple-400 focus:border-transparent ${
-                    errors.symptoms ? 'border-red-300' : ''
-                  }`}
+                  className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent h-32"
+                  placeholder="Describe any symptoms you're experiencing..."
                 />
                 {errors.symptoms && (
-                  <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="mt-1 text-sm text-red-600"
-                  >
-                    {errors.symptoms.message as string}
-                  </motion.p>
+                  <p className="mt-1 text-red-500 text-sm">{errors.symptoms.message}</p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Additional Concerns
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Additional Concerns (Optional)
                 </label>
                 <textarea
                   {...register('concerns')}
-                  rows={4}
-                  className="mt-1 block w-full rounded-lg border border-gray-200 text-gray-800 py-2 px-4 focus:ring-2 focus:ring-purple-400 focus:border-transparent"
+                  className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent h-32"
+                  placeholder="Any other concerns you'd like to discuss..."
                 />
-              </div>
-            </motion.div>
-          )}
-
-          {formStep === 2 && (
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="space-y-4"
-            >
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Medical History
-                </label>
-                <textarea
-                  {...register('medicalHistory', {
-                    required: 'Please provide your medical history'
-                  })}
-                  rows={4}
-                  className={`mt-1 block w-full rounded-lg border border-gray-200 text-gray-800 py-2 px-4 focus:ring-2 focus:ring-purple-400 focus:border-transparent ${
-                    errors.medicalHistory ? 'border-red-300' : ''
-                  }`}
-                />
-                {errors.medicalHistory && (
-                  <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="mt-1 text-sm text-red-600"
-                  >
-                    {errors.medicalHistory.message as string}
-                  </motion.p>
-                )}
-              </div>
-
-              {/* File Upload */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Upload USG Results (optional)
-                </label>
-                <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
-                  <div className="space-y-1 text-center">
-                    <FiUpload className="mx-auto h-12 w-12 text-gray-400" />
-                    <div className="flex text-sm text-gray-600">
-                      <label className="relative cursor-pointer rounded-md font-medium text-purple-600 hover:text-purple-500">
-                        <span>Upload files</span>
-                        <input
-                          type="file"
-                          multiple
-                          accept="image/*,.pdf"
-                          onChange={handleFileUpload}
-                          className="sr-only"
-                        />
-                      </label>
-                    </div>
-                    <p className="text-xs text-gray-500">
-                      PNG, JPG, PDF up to 10MB
-                    </p>
-                  </div>
-                </div>
-
-                {/* File Preview */}
-                {files.length > 0 && (
-                  <div className="mt-4 space-y-2">
-                    {files.map((file, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between p-2 bg-purple-50 rounded-md"
-                      >
-                        <span className="text-sm text-purple-600">
-                          {file.name}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => removeFile(index)}
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          <FiX />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
               </div>
             </motion.div>
           )}
@@ -284,7 +226,7 @@ const onSubmit = (data: FormData) => {
             Back
           </button>
           
-          {formStep < 2 ? (
+          {formStep < 1 ? (
             <button
               type="button"
               onClick={goToNext}

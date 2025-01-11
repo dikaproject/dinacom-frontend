@@ -4,6 +4,8 @@ import { useState, createContext } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useForm, FormProvider } from 'react-hook-form';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ConsultationData } from '@/types/consultation';
+import MidtransStatus from './MidtransStatus';
 
 // Step Components
 import DoctorSelection from './DoctorSelection';
@@ -11,6 +13,7 @@ import ScheduleSelection from './ScheduleSelection';
 import ConsultationForm from './ConsultationForm';
 import PaymentSection from './PaymentSection';
 import SuccessConfirmation from './SuccessConfirmation';
+import PendingConfirmation from './PendingConfirmation';
 
 const queryClient = new QueryClient();
 
@@ -19,15 +22,74 @@ export const ConsultationContext = createContext({});
 
 const Konsultasi = () => {
   const [currentStep, setCurrentStep] = useState(1);
-  const [consultationData, setConsultationData] = useState({});
+  const [consultationData, setConsultationData] = useState<ConsultationData>({
+    doctorId: '',
+    doctorName: '',
+    consultationFee: 0,
+    type: 'OFFLINE',
+    layananKesehatan: {
+      id: '',
+      name: '',
+      district: ''
+    }
+  });
+
   const methods = useForm();
+
+  interface StepProps {
+    nextStep: () => void;
+    prevStep: () => void;
+  }
 
   const steps = [
     { number: 1, title: "Choose Doctor", component: DoctorSelection },
     { number: 2, title: "Schedule", component: ScheduleSelection },
     { number: 3, title: "Consultation Details", component: ConsultationForm },
     { number: 4, title: "Payment", component: PaymentSection },
-    { number: 5, title: "Confirmation", component: SuccessConfirmation },
+    { 
+      number: 5, 
+      title: "Confirmation", 
+      component: (props: StepProps) => {
+        // For Midtrans payments that are complete
+        if (consultationData.paymentMethod === 'MIDTRANS' && consultationData.paymentStatus === 'PAID') {
+          return <SuccessConfirmation 
+            consultation={{
+              doctor: consultationData.doctorName,
+              date: new Date(consultationData.schedule!).toLocaleDateString(),
+              time: new Date(consultationData.schedule!).toLocaleTimeString(),
+              location: consultationData.layananKesehatan.name,
+              bookingId: consultationData.consultationId!,
+              type: consultationData.type
+            }}
+            payment={{
+              amount: consultationData.consultationFee,
+              paymentMethod: 'Midtrans',
+              transactionId: consultationData.transactionId!,
+              paymentDate: new Date().toISOString()
+            }}
+          />;
+        }
+        
+        // For manual payments (BANK_TRANSFER/QRIS)
+        if (consultationData.paymentMethod === 'BANK_TRANSFER' || consultationData.paymentMethod === 'QRIS') {
+          return <PendingConfirmation paymentDetails={{
+            method: 'BANK_TRANSFER' as 'BANK_TRANSFER' | 'QRIS',
+            amount: 0,
+            bankInfo: undefined,
+            qrisImage: undefined
+          }} consultation={{
+            doctor: '',
+            date: '',
+            time: '',
+            location: '',
+            type: 'ONLINE'
+          }} {...props} />;
+        }
+        
+        // Default to MidtransStatus for processing Midtrans payments
+        return <MidtransStatus status="pending" />;
+      }
+    },
   ];
 
   const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, 5));
