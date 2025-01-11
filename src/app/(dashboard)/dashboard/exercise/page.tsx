@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { pregnancyService } from "@/services/pregnancy";
 import { 
   Plus, X, Activity, Clock, Heart,
-  ChevronDown
 } from "lucide-react";
 import DashboardSkeleton from "@/components/loading/DashboardSkeleton";
 import type { ExerciseLog } from "@/types/pregnancy";
@@ -149,7 +148,7 @@ export default function ExercisePage() {
                     <div>
                       <p className="font-medium text-gray-900">{log.activityType}</p>
                       <p className="text-sm text-gray-500">
-                        {new Date(log.date).toLocaleDateString()}
+                        {log.date ? new Date(log.date).toLocaleDateString() : ''}
                       </p>
                     </div>
                   </div>

@@ -38,10 +38,10 @@ const LoginForm = () => {
   const handleRoleBasedRedirect = (role: UserRole) => {
     switch (role) {
       case "ADMIN":
-        router.push("/admin/dashboard");
+        router.push("/admin");
         break;
       case "DOCTOR":
-        router.push("/doctor/dashboard");
+        router.push("/doctor");
         break;
       case "USER":
         router.push("/dashboard");

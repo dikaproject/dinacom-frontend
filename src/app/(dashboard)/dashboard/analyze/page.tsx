@@ -23,13 +23,42 @@ import {
 } from "recharts";
 import DashboardSkeleton from "@/components/loading/DashboardSkeleton";
 
+interface WeightData {
+  date: string;
+  weight: number;
+}
+
+interface NutritionData {
+  date: string;
+  calories: number;
+  protein: number;
+}
+
+interface ExerciseData {
+  date: string;
+  duration: number;
+}
+
+interface HealthInsights {
+  analysis: {
+    overallStatus: string;
+    nutritionAnalysis: string;
+    nutritionRecommendations: string[];
+    exerciseEvaluation: string;
+    exerciseSuggestions: string[];
+    warningSignsToWatch: string[];
+    currentWeek: number;
+    weeklyRecommendations: string[];
+  };
+}
+
 export default function AnalyzePage() {
   const [loading, setLoading] = useState(true);
   const [aiLoading, setAiLoading] = useState(false);
-  const [insights, setInsights] = useState<any>(null);
-  const [weightData, setWeightData] = useState([]);
-  const [nutritionData, setNutritionData] = useState([]);
-  const [exerciseData, setExerciseData] = useState([]);
+  const [insights, setInsights] = useState<HealthInsights['analysis'] | null>(null);
+  const [weightData, setWeightData] = useState<WeightData[]>([]);
+  const [nutritionData, setNutritionData] = useState<NutritionData[]>([]);
+  const [exerciseData, setExerciseData] = useState<ExerciseData[]>([]);
 
   const fetchInsights = async () => {
     setAiLoading(true);
@@ -52,16 +81,16 @@ export default function AnalyzePage() {
           pregnancyService.getExerciseLogs(),
         ]);
 
-        // Process weight data
+        // Process weight data - ensure date exists before creating Date object
         const weightTrend = checkups.map((check) => ({
-          date: new Date(check.date).toLocaleDateString(),
+          date: check.date ? new Date(check.date).toLocaleDateString() : '',
           weight: check.weight,
         }));
         setWeightData(weightTrend);
 
         // Process nutrition data
         const nutritionTrend = nutrition.map((log) => ({
-          date: new Date(log.date).toLocaleDateString(),
+          date: log.date ? new Date(log.date).toLocaleDateString() : '',
           calories: log.calories,
           protein: log.protein,
         }));
@@ -69,7 +98,7 @@ export default function AnalyzePage() {
 
         // Process exercise data
         const exerciseTrend = exercise.map((log) => ({
-          date: new Date(log.date).toLocaleDateString(),
+          date: log.date ? new Date(log.date).toLocaleDateString() : '',
           duration: log.duration,
         }));
         setExerciseData(exerciseTrend);

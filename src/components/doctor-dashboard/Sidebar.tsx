@@ -7,16 +7,14 @@ import { motion } from 'framer-motion';
 import {
   Home,
   Calendar,
-  Activity,
-  Coffee,
-  Heart,
+  Users,
+  Clock,
   MessageCircle,
-  Bell,
   Settings,
   ChevronLeft,
   ChevronRight,
   LogOut,
-  HomeIcon
+  FileText
 } from 'lucide-react';
 
 const Sidebar = () => {
@@ -27,19 +25,16 @@ const Sidebar = () => {
   const handleLogout = async () => {
     localStorage.removeItem('token');
     router.push('/login');
-    // Force page reload after navigation
     window.location.reload();
   };
 
   const menuItems = [
-    { name: 'Overview', icon: Home, path: '/dashboard' },
-    { name: 'Daily Checkup', icon: Calendar, path: '/dashboard/checkup' },
-    { name: 'Analyze', icon: Activity, path: '/dashboard/analyze' },
-    { name: 'Nutrition', icon: Coffee, path: '/dashboard/nutrition' },
-    { name: 'Exercise', icon: Heart, path: '/dashboard/exercise' },
-    { name: 'Consultation', icon: MessageCircle, path: '/dashboard/consultation' },
-    { name: 'Reminders', icon: Bell, path: '/dashboard/reminders' },
-    { name: 'Back to Home', icon: HomeIcon, path: '/' }
+    { name: 'Overview', icon: Home, path: '/doctor' },
+    { name: 'Schedule', icon: Calendar, path: '/doctor/schedule' },
+    { name: 'Patients', icon: Users, path: '/doctor/patients' },
+    { name: 'Appointments', icon: Clock, path: '/doctor/appointments' },
+    { name: 'Consultations', icon: MessageCircle, path: '/doctor/consultations' },
+    { name: 'Medical Records', icon: FileText, path: '/doctor/records' },
   ];
 
   return (
@@ -50,7 +45,7 @@ const Sidebar = () => {
     >
       <div className="p-4 flex justify-between items-center">
         {!isCollapsed && (
-          <h2 className="font-semibold text-purple-600">PregnaCare</h2>
+          <h2 className="font-semibold text-purple-600">MomCare Doctor</h2>
         )}
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
@@ -79,9 +74,9 @@ const Sidebar = () => {
 
       <div className="p-4 border-t space-y-2">
         <Link
-          href="/dashboard/settings"
+          href="/doctor/settings"
           className={`flex items-center space-x-2 p-3 rounded-lg transition-colors text-gray-600 ${
-            pathname === '/dashboard/settings'
+            pathname === '/doctor/settings'
               ? 'bg-purple-100 text-purple-600'
               : 'hover:bg-purple-50'
           }`}

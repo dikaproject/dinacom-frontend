@@ -1,7 +1,6 @@
 import api from './api';
 import { AxiosError } from 'axios';
 import {
-  PregnancyProfile,
   PregnancyResponse,
   DailyCheckup,
   NutritionLog,
@@ -9,7 +8,6 @@ import {
   AIRecommendation,
   NutritionAnalysis,
   ReminderSettings,
-  ProfileUpdateData,
   PasswordUpdateData,
   UpdateResponse,
   HealthInsightResponse
@@ -17,22 +15,27 @@ import {
 
 export const pregnancyService = {
   // Profile Management
-  createProfile: async (profileData: PregnancyProfile): Promise<PregnancyResponse> => {
-    try {
-      const response = await api.post<PregnancyResponse>('/pregnancy/profile', profileData);
-      return response.data;
-    } catch (error) {
-      if (error instanceof AxiosError && error.response?.data) {
-        throw new Error(error.response.data.message);
-      }
-      throw new Error('Failed to create pregnancy profile');
+  createProfile: async (formData: FormData) => {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/pregnancy/profile`, {
+      method: 'POST',
+      credentials: 'include',
+      body: formData, // FormData will automatically set the correct content-type
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to create profile');
     }
+
+    return response.json();
   },
 
-  getProfile: async (): Promise<PregnancyProfile> => {
+  getProfile: async (): Promise<PregnancyResponse> => {
     try {
       const response = await api.get<PregnancyResponse>('/pregnancy/profile');
-      return response.data.profile;
+      if (!response.data || !response.data.profile) {
+        throw new Error('Invalid profile data received');
+      }
+      return response.data;
     } catch (error) {
       if (error instanceof AxiosError && error.response?.data) {
         throw new Error(error.response.data.message);
@@ -41,9 +44,13 @@ export const pregnancyService = {
     }
   },
 
-  updateProfile: async (profileData: ProfileUpdateData): Promise<UpdateResponse> => {
+  updateProfile: async (formData: FormData): Promise<UpdateResponse> => {
     try {
-      const response = await api.put<UpdateResponse>('/settings/profile', profileData);
+      const response = await api.put<UpdateResponse>('/pregnancy/profile', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
       return response.data;
     } catch (error) {
       if (error instanceof AxiosError && error.response?.data) {

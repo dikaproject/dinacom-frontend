@@ -2,18 +2,26 @@ export type BloodType = 'A+' | 'A-' | 'B+' | 'B-' | 'O+' | 'O-' | 'AB+' | 'AB-' 
 export type Trimester = 'FIRST_TRIMESTER' | 'SECOND_TRIMESTER' | 'THIRD_TRIMESTER';
 
 export interface PregnancyProfile {
+  email: string;
+  photoUrl: string;
   id?: string;
   fullName: string;
+  photoProfile?: string | File; 
   dateOfBirth: string;
   phoneNumber: string;
-  reminderTime: string;
+  reminderTime?: string;
   address: string;
+  user?: {
+    email: string;
+    role: string;
+  };
   bloodType?: BloodType;
   height?: string;
   dueDate: string;
   pregnancyStartDate: string;
   pregnancyWeek?: number;
   trimester?: Trimester;
+  isWhatsappActive?: boolean;
 }
 
 export interface DailyCheckup {
@@ -26,7 +34,7 @@ export interface DailyCheckup {
   waterIntake: number;
   symptoms?: string[];
   notes?: string;
-  createdAt?: string;
+  createdAt: string;
 }
 
 export interface NutritionLog {
@@ -94,6 +102,8 @@ export interface AnalyzeStatus {
 export interface PregnancyResponse {
   message: string;
   profile: PregnancyProfile;
+  reminderTime: string;
+  isWhatsappActive: boolean;
 }
 
 export interface ReminderSettings {
@@ -133,3 +143,11 @@ export interface HealthInsightResponse {
   };
 }
 
+export interface AIResponse {
+  success: boolean;
+  analysis: {
+    weeklyRecommendations: string[];
+    nutritionRecommendations: string[];
+    exerciseSuggestions: string[];
+  };
+}

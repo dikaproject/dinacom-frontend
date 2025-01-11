@@ -2,7 +2,7 @@
 "use client"
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiSend, FiPaperclip, FiImage } from 'react-icons/fi';
+import { FiSend, FiGlobe } from 'react-icons/fi'; // Add globe icon
 
 interface Message {
   id: string;
@@ -19,12 +19,41 @@ const PregnaAI = () => {
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [apiKey] = useState('inth_bediuekuefBKUSDWtbDWigU886DSBjkkbh'); // Demo key
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+  const [useWebSearch, setUseWebSearch] = useState(false);
 
+  // Improved scroll logic
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (chatContainerRef.current) {
+      const { scrollHeight, clientHeight } = chatContainerRef.current;
+      chatContainerRef.current.scrollTop = scrollHeight - clientHeight;
+    }
   };
 
-  useEffect(scrollToBottom, [messages]);
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  // Add message formatting helper
+  const formatMessage = (text: string) => {
+    // Split text into paragraphs
+    const paragraphs = text.split('\n');
+    return paragraphs.map((paragraph, idx) => {
+      // Check if paragraph starts with a number followed by dot (like "1.")
+      const isList = /^\d+\./.test(paragraph);
+      // Check if paragraph starts with asterisk or dash
+      const isBullet = /^[\*\-]/.test(paragraph);
+
+      if (isList || isBullet) {
+        return (
+          <li key={idx} className="ml-4">
+            {paragraph.replace(/^[\*\-]\s*/, '')}
+          </li>
+        );
+      }
+      return <p key={idx} className="mb-2">{paragraph}</p>;
+    });
+  };
 
   // Add typing animation helper
   const typeMessage = (text: string, callback: (typedText: string) => void) => {
@@ -66,7 +95,8 @@ const PregnaAI = () => {
         },
         body: JSON.stringify({
           question: newMessage,
-          version: 'ITHAI-1.0' // Using demo version
+          version: 'ITHAI-1.0', // Using demo version
+          useWebSearch: useWebSearch // Add this parameter
         })
       });
 
@@ -127,13 +157,16 @@ const PregnaAI = () => {
             </div>
           </div>
 
-          {/* Messages Container */}
-          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 bg-gray-50">
+          {/* Updated Messages Container */}
+          <div 
+            ref={chatContainerRef}
+            className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 bg-gray-50 scrollbar-thin scrollbar-thumb-purple-200 scrollbar-track-transparent"
+          >
             {/* Welcome Message */}
             <div className="bg-purple-50 border border-purple-100 rounded-lg p-4 mb-4">
               <p className="text-purple-800 text-sm">
-                👋 Welcome! I'm your AI pregnancy assistant. While I can provide information and support,
-                please remember that I'm not a substitute for professional medical care. Always consult
+                👋 Welcome! I&apos;m your AI pregnancy assistant. While I can provide information and support,
+                please remember that I&apos;m not a substitute for professional medical care. Always consult
                 with healthcare providers for medical decisions.
               </p>
             </div>
@@ -148,17 +181,20 @@ const PregnaAI = () => {
                   className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
                   <div
-                    className={`max-w-[80%] sm:max-w-sm px-4 py-3 rounded-2xl ${
+                    className={`max-w-[85%] px-4 py-3 rounded-2xl ${
                       message.sender === 'user'
                         ? 'bg-purple-600 text-white'
                         : 'bg-white text-gray-800 shadow-sm'
                     }`}
                   >
-                    <p className="text-[15px] break-words">{message.text}</p>
+                    <div className="text-[15px] break-words">
+                      {formatMessage(message.text)}
+                    </div>
+                    
                     {message.sources && message.sources.length > 0 && (
                       <div className="mt-2 pt-2 border-t border-gray-200">
                         <p className="text-xs text-gray-500 font-medium">Sources:</p>
-                        <ul className="mt-1 space-y-1">
+                        <ul className="mt-1 space-y-1 list-disc pl-4">
                           {message.sources.map((source, index) => (
                             <li key={index} className="text-xs text-gray-500">
                               {source}
@@ -167,11 +203,10 @@ const PregnaAI = () => {
                         </ul>
                       </div>
                     )}
-                    <p
-                      className={`text-xs mt-1 ${
-                        message.sender === 'user' ? 'text-purple-200' : 'text-gray-500'
-                      }`}
-                    >
+                    
+                    <p className={`text-xs mt-1 ${
+                      message.sender === 'user' ? 'text-purple-200' : 'text-gray-500'
+                    }`}>
                       {message.timestamp.toLocaleTimeString()}
                     </p>
                   </div>
@@ -210,11 +245,16 @@ const PregnaAI = () => {
           <div className="border-t border-gray-200 px-3 sm:px-6 py-3 sm:py-4 bg-white flex-none">
             <div className="flex items-center gap-2 sm:gap-4">
               <div className="hidden sm:flex space-x-2">
-                <button className="p-2 text-gray-400 hover:text-purple-600 transition-colors">
-                  <FiPaperclip className="w-5 h-5" />
-                </button>
-                <button className="p-2 text-gray-400 hover:text-purple-600 transition-colors">
-                  <FiImage className="w-5 h-5" />
+                <button 
+                  onClick={() => setUseWebSearch(!useWebSearch)}
+                  className={`p-2 transition-colors ${
+                    useWebSearch 
+                      ? 'text-purple-600 bg-purple-50' 
+                      : 'text-gray-400 hover:text-purple-600'
+                  } rounded-lg`}
+                  title={useWebSearch ? "Web search enabled" : "Web search disabled"}
+                >
+                  <FiGlobe className="w-5 h-5" />
                 </button>
               </div>
               <input
@@ -235,6 +275,11 @@ const PregnaAI = () => {
                 <FiSend className="w-5 h-5" />
               </motion.button>
             </div>
+            {useWebSearch && (
+              <div className="mt-2 text-xs text-gray-500 px-4">
+                Web search is enabled. AI will include online sources in responses.
+              </div>
+            )}
           </div>
         </div>
       </div>

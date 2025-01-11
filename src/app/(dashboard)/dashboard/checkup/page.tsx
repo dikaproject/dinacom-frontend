@@ -26,7 +26,8 @@ export default function DailyCheckupPage() {
     sleepHours: "",
     waterIntake: "",
     symptoms: [],
-    notes: ""
+    notes: "",
+    createdAt: new Date().toISOString()
   });
 
   useEffect(() => {
@@ -35,7 +36,7 @@ export default function DailyCheckupPage() {
         const logs = await pregnancyService.getDailyCheckups();
         const today = new Date().toDateString();
         const hasToday = logs.some(log => 
-          new Date(log.date).toDateString() === today
+          log.date && new Date(log.date).toDateString() === today
         );
         setHasCompletedToday(hasToday);
       } catch (error) {
@@ -82,7 +83,8 @@ export default function DailyCheckupPage() {
         sleepHours: "",
         waterIntake: "",
         symptoms: [],
-        notes: ""
+        notes: "",
+        createdAt: new Date().toISOString()
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save checkup");

@@ -14,10 +14,16 @@ import {
   XCircle,
 } from "lucide-react";
 import DashboardSkeleton from "@/components/loading/DashboardSkeleton";
+import type { PregnancyProfile } from "@/types/pregnancy";
+
+interface ExtendedProfile extends PregnancyProfile {
+  isWhatsappActive: boolean;
+  reminderTime: string;
+}
 
 export default function RemindersPage() {
   const [loading, setLoading] = useState(true);
-  const [profile, setProfile] = useState<any>(null);
+  const [profile, setProfile] = useState<ExtendedProfile | null>(null);
   const [reminderTime, setReminderTime] = useState("");
   const [isWhatsappActive, setIsWhatsappActive] = useState(true);
 
@@ -26,21 +32,25 @@ export default function RemindersPage() {
   const fetchProfile = async () => {
     try {
       const data = await pregnancyService.getProfile();
-      setProfile(data);
+      if (!data) throw new Error('No data received');
+
+      const wibTime = data.reminderTime 
+        ? new Date(data.reminderTime).toLocaleTimeString('en-US', {
+            timeZone: 'Asia/Jakarta',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+          })
+        : "08:00";
+
+      setProfile({
+        ...data,
+        isWhatsappActive: data.isWhatsappActive ?? false,
+        reminderTime: data.reminderTime || new Date().toISOString()
+      } as unknown as ExtendedProfile);
       
-      if (data.reminderTime) {
-        const wibTime = new Date(data.reminderTime).toLocaleTimeString('en-US', {
-          timeZone: 'Asia/Jakarta',
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false
-        });
-        setReminderTime(wibTime);
-      } else {
-        setReminderTime("08:00");
-      }
-      
-      setIsWhatsappActive(data.isWhatsappActive);
+      setReminderTime(wibTime);
+      setIsWhatsappActive(data.isWhatsappActive ?? false);
     } catch (error) {
       console.error("Failed to fetch profile:", error);
     } finally {
@@ -48,21 +58,25 @@ export default function RemindersPage() {
     }
   };
 
-  // Update handleUpdateSettings
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
   const handleUpdateSettings = async () => {
     setIsSaving(true);
     try {
       const [hours, minutes] = reminderTime.split(":");
-      // Store in UTC without conversion since we'll handle display separately
       const date = new Date();
-      date.setUTCHours(parseInt(hours), parseInt(minutes), 0, 0);
+      // Convert WIB time to UTC for storage
+      const jakartaOffset = 7; // UTC+7
+      date.setUTCHours(parseInt(hours) - jakartaOffset, parseInt(minutes), 0, 0);
 
-      await pregnancyService.updateReminderSettings({
+      const response = await pregnancyService.updateReminderSettings({
         isWhatsappActive,
         reminderTime: date.toISOString(),
       });
 
-      // Refresh data
+      if (!response) throw new Error('Update failed');
       await fetchProfile();
     } catch (error) {
       console.error("Failed to update settings:", error);
@@ -79,36 +93,6 @@ export default function RemindersPage() {
       hour12: false,
     });
   };
-
-  // Update display time from UTC to WIB
-  useEffect(() => {
-    const fetchProfile = async () => {
-        try {
-          const data = await pregnancyService.getProfile();
-          setProfile(data);
-          
-          if (data.reminderTime) {
-            const wibTime = new Date(data.reminderTime).toLocaleTimeString('en-US', {
-              timeZone: 'Asia/Jakarta',
-              hour: '2-digit',
-              minute: '2-digit',
-              hour12: false
-            });
-            setReminderTime(wibTime);
-          } else {
-            setReminderTime("08:00");
-          }
-          
-          setIsWhatsappActive(data.isWhatsappActive);
-        } catch (error) {
-          console.error("Failed to fetch profile:", error);
-        } finally {
-          setLoading(false);
-        }
-      };
-
-    fetchProfile();
-  }, []);
 
   if (loading) {
     return <DashboardSkeleton />;
@@ -197,7 +181,7 @@ export default function RemindersPage() {
           </h2>
 
           <div className="space-y-4">
-            {["Checkup", "Nutrition", "Exercise"].map((type, index) => (
+            {["Checkup", "Nutrition", "Exercise"].map((type) => (
               <div
                 key={type}
                 className="flex items-center justify-between p-4 rounded-lg bg-gray-50"

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 import { useAuth } from "@/context/AuthContext";
 import { useState, useEffect } from "react";
@@ -13,12 +14,16 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { pregnancyService } from "@/services/pregnancy";
-import { PregnancyProfile, DailyCheckup } from "@/types/pregnancy";
+import { PregnancyProfile, DailyCheckup, AIResponse } from "@/types/pregnancy";
 import DashboardSkeleton from "@/components/loading/DashboardSkeleton";
 import { useCountdown } from "@/hooks/useCountdown";
 
 const getNextCheckupTime = (lastCheckup: DailyCheckup | null): Date => {
-  if (!lastCheckup) return new Date();
+  const today = new Date();
+  
+  if (!lastCheckup || !lastCheckup.createdAt) {
+    return today;
+  }
   
   const lastCheckupDate = new Date(lastCheckup.createdAt);
   const nextCheckupDate = new Date(lastCheckupDate);
@@ -38,7 +43,7 @@ const getCheckupStatus = (checkups: DailyCheckup[]): {
 
   const lastCheckup = checkups[0];
   
-  if (!lastCheckup) {
+  if (!lastCheckup || !lastCheckup.createdAt) {
     return {
       canCheckup: true,
       message: "Daily checkup needed",
@@ -46,10 +51,7 @@ const getCheckupStatus = (checkups: DailyCheckup[]): {
     };
   }
 
-  const lastCheckupDate = lastCheckup.createdAt 
-    ? new Date(lastCheckup.createdAt)
-    : new Date();
-  
+  const lastCheckupDate = new Date(lastCheckup.createdAt);
   lastCheckupDate.setHours(0, 0, 0, 0);
 
   if (lastCheckupDate.getTime() === today.getTime()) {
@@ -85,11 +87,12 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const [profileData, checkupsData] = await Promise.all([
+        const [profileResponse, checkupsData] = await Promise.all([
           pregnancyService.getProfile(),
           pregnancyService.getDailyCheckups()
         ]);
         
+        const profileData = profileResponse.profile;
         setProfile(profileData);
         setCheckups(checkupsData);
         
@@ -102,14 +105,13 @@ export default function DashboardPage() {
             week: profileData.pregnancyWeek,
           };
           
-          const aiResponse = await pregnancyService.getAIRecommendations(healthData);
+          const aiResponse = await pregnancyService.getAIRecommendations(healthData) as unknown as AIResponse;
           if (aiResponse?.analysis) {
-            // Combine all recommendations into a single array
             const allRecommendations = [
               ...(aiResponse.analysis.weeklyRecommendations || []),
               ...(aiResponse.analysis.nutritionRecommendations || []),
               ...(aiResponse.analysis.exerciseSuggestions || [])
-            ];
+            ].filter(Boolean);
             setAiRecommendations(allRecommendations);
           }
         } 
@@ -160,7 +162,9 @@ export default function DashboardPage() {
     },
     {
       label: "Trimester",
-      value: getTrimmester(profile?.pregnancyWeek || 0),
+      value: profile?.trimester 
+        ? profile.trimester.split('_')[0].toLowerCase()
+        : getTrimmester(profile?.pregnancyWeek || 0),
       icon: TrendingUp,
     },
     {

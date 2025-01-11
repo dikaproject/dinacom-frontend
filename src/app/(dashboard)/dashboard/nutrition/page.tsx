@@ -22,6 +22,8 @@ const mealTypeIcons = {
   SNACK: Coffee,
 };
 
+type MealType = "BREAKFAST" | "LUNCH" | "DINNER" | "SNACK";
+
 export default function NutritionLogPage() {
   const [loading, setLoading] = useState(false);
   const [logs, setLogs] = useState<NutritionLog[]>([]);
@@ -45,7 +47,13 @@ const [aiAnalysis, setAiAnalysis] = useState<string>("");
 const analyzeFoodWithAI = async () => {
   setIsAnalyzing(true);
   try {
-    const response = await pregnancyService.analyzeFoodNutrition(foodDescription);
+    const response: {
+      calories?: number;
+      protein?: number;
+      carbs?: number;
+      fats?: number;
+      explanation: string;
+    } = await pregnancyService.analyzeFoodNutrition(foodDescription);
     
     setFormData({
       ...formData,
@@ -235,7 +243,7 @@ const analyzeFoodWithAI = async () => {
                     onChange={(e) =>
                       setFormData({
                         ...formData,
-                        mealType: e.target.value as any,
+                        mealType: e.target.value as MealType,
                       })
                     }
                     className="mt-1 text-gray-700 w-full px-4 py-3 rounded-lg border border-purple-100 focus:outline-none focus:ring-2 focus:ring-purple-400"

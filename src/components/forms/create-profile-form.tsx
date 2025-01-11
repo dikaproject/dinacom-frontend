@@ -1,9 +1,12 @@
 "use client";
-import { useState } from "react";
+
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { PregnancyProfile } from "@/types/pregnancy";
 import { pregnancyService } from "@/services/pregnancy"; 
+import Image from "next/image";
+import { FiUpload } from "react-icons/fi";
 
 const fadeIn = {
   initial: { opacity: 0, y: 20 },
@@ -15,15 +18,17 @@ const CreateProfileForm = () => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
   const [formData, setFormData] = useState<PregnancyProfile>({
     fullName: "",
+    photoProfile: undefined,
     dateOfBirth: "",
     phoneNumber: "",
     reminderTime: "",
     address: "",
-    bloodType: "", // now valid for empty string
+    bloodType: "",
     height: "",
     pregnancyStartDate: "",
     dueDate: "",
@@ -38,13 +43,43 @@ const CreateProfileForm = () => {
     }));
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setFormData(prev => ({
+        ...prev,
+        photoProfile: file
+      }));
+
+      // Create preview URL
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhotoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
 
     try {
-      await pregnancyService.createProfile(formData);
+      const formDataToSend = new FormData();
+      
+      // Append all form fields
+      Object.entries(formData).forEach(([key, value]) => {
+        if (value !== undefined && value !== "") {
+          if (key === 'photoProfile' && value instanceof File) {
+            formDataToSend.append('photoProfile', value);
+          } else {
+            formDataToSend.append(key, value.toString());
+          }
+        }
+      });
+
+      await pregnancyService.createProfile(formDataToSend);
       router.push("/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create profile");
@@ -70,6 +105,40 @@ const CreateProfileForm = () => {
                 {error}
               </div>
             )}
+
+            {/* Photo Upload Section */}
+            <div className="flex justify-center mb-8">
+              <div className="space-y-4">
+                <div className="relative w-32 h-32 rounded-full overflow-hidden border-2 border-purple-100 mx-auto">
+                  {photoPreview ? (
+                    <Image
+                      src={photoPreview}
+                      alt="Profile preview"
+                      fill
+                      className="object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-purple-50">
+                      <FiUpload className="w-8 h-8 text-purple-300" />
+                    </div>
+                  )}
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="px-4 py-2 text-sm text-purple-600 border border-purple-200 rounded-lg hover:bg-purple-50"
+                >
+                  Upload Photo
+                </button>
+              </div>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Personal Details */}
