@@ -5,6 +5,7 @@ import { FiSave, FiArrowLeft } from 'react-icons/fi';
 import Link from 'next/link';
 import PageWrapper from '@/components/PageWrapper';
 import { articleCategoryService } from '@/services/articleCategory';
+import toast from 'react-hot-toast';
 
 const AddArticleCategory = () => {
   const router = useRouter();
@@ -33,6 +34,7 @@ const AddArticleCategory = () => {
 
     try {
       await articleCategoryService.create(formData);
+      toast.success('Add category article successfuly')
       router.push('/admin/categories-article');
     } catch (error: any) {
       setError(error?.response?.data?.message || 'Failed to create category');

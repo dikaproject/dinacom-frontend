@@ -1,15 +1,24 @@
-// pages/admin/doctors/edit/[id]/page.tsx
 "use client"
+
+import { use } from 'react';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { FiArrowLeft, FiSave } from 'react-icons/fi';
 import Link from 'next/link';
 import PageWrapper from '@/components/PageWrapper';
+import { adminService } from '@/services/admin';
+import { LayananKesehatan } from '@/types/admin';
+import toast from 'react-hot-toast';
+import ImageUpload from '@/components/ImageUpload';
 
-const EditDoctor = ({ params }: { params: { id: string } }) => {
+const EditDoctor = ({ params }: { params: Promise<{ id: string }> }) => {
+    const resolvedParams = use(params);
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [healthcareProviders, setHealthcareProviders] = useState<LayananKesehatan[]>([]);
+  const [doctor, setDoctor] = useState<any>(null); // Add doctor state
+
   const [formData, setFormData] = useState({
     email: '',
     fullName: '',
@@ -27,48 +36,45 @@ const EditDoctor = ({ params }: { params: { id: string } }) => {
     approvalDocument: null as File | null
   });
 
-  // Mock healthcare providers for dropdown
-  const healthcareProviders = [
-    { id: '1', name: 'RS Premier Bintaro' },
-    { id: '2', name: 'RSCM Jakarta' },
-  ];
-
-  // Update the common input/textarea classes
-  const inputClasses = "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-gray-900 focus:ring-purple-500 focus:border-purple-500";
-
-  // Fetch doctor data
   useEffect(() => {
-    const fetchDoctor = async () => {
+    const fetchData = async () => {
       setIsLoading(true);
       try {
-        // Mock API call - replace with actual API
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        // Simulate fetched data
+        const [fetchedDoctor, providers] = await Promise.all([
+          adminService.getDoctorById(resolvedParams.id),
+          adminService.getHealthcareProviders()
+        ]);
+
+        setDoctor(fetchedDoctor); // Store doctor data
+        setHealthcareProviders(providers);
         setFormData({
-          email: 'sarah.j@example.com',
-          fullName: 'Dr. Sarah Johnson',
-          strNumber: 'STR123456',
-          sipNumber: 'SIP789012',
-          phoneNumber: '6281234567890',
-          province: 'DKI Jakarta',
-          district: 'Jakarta Selatan',
-          subdistrict: 'Pondok Indah',
-          address: 'Jl. RS No. 1',
-          postalCode: '12310',
-          healthcareProviderId: '1',
-          educationBackground: 'Medical School - University of Indonesia',
+          email: fetchedDoctor.user.email,
+          fullName: fetchedDoctor.fullName,
+          strNumber: fetchedDoctor.strNumber,
+          sipNumber: fetchedDoctor.sipNumber,
+          phoneNumber: fetchedDoctor.phoneNumber,
+          province: fetchedDoctor.provinsi,
+          district: fetchedDoctor.kabupaten,
+          subdistrict: fetchedDoctor.kecamatan,
+          address: fetchedDoctor.address,
+          postalCode: fetchedDoctor.codePos,
+          healthcareProviderId: fetchedDoctor.layananKesehatanId,
+          educationBackground: fetchedDoctor.educationBackground,
           profileImage: null,
           approvalDocument: null
         });
-      } catch {
-        setError('Failed to fetch doctor data');
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to fetch data';
+        setError(errorMessage);
+        toast.error(errorMessage);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchDoctor();
-  }, [params.id]);
+    fetchData();
+  }, [resolvedParams.id]);
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,15 +101,36 @@ const EditDoctor = ({ params }: { params: { id: string } }) => {
     }
 
     try {
-      // Add update API call here
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await adminService.updateDoctor({
+        id: params.id,
+        email: formData.email,
+        fullName: formData.fullName,
+        strNumber: formData.strNumber,
+        sipNumber: formData.sipNumber,
+        phoneNumber: formData.phoneNumber,
+        provinsi: formData.province,
+        kabupaten: formData.district,
+        kecamatan: formData.subdistrict,
+        address: formData.address,
+        codePos: formData.postalCode,
+        layananKesehatanId: formData.healthcareProviderId,
+        educationBackground: formData.educationBackground,
+        photoProfile: formData.profileImage || undefined,
+        documentsProof: formData.approvalDocument || undefined
+      });
+
+      toast.success('Doctor updated successfully');
       router.push('/admin/doctors');
-    } catch {
-      setError('Failed to update doctor');
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update doctor';
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
   };
+
+  const inputClasses = "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-gray-900 focus:ring-purple-500 focus:border-purple-500";
 
   if (isLoading && !formData.email) {
     return (
@@ -294,32 +321,19 @@ const EditDoctor = ({ params }: { params: { id: string } }) => {
 
                 {/* File Uploads */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Update Profile Image</label>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) setFormData({ ...formData, profileImage: file });
-                      }}
-                      className="mt-1 block w-full"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Update Approval Document</label>
-                    <input
-                      type="file"
-                      accept=".pdf,.doc,.docx"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) setFormData({ ...formData, approvalDocument: file });
-                      }}
-                      className="mt-1 block w-full"
-                    />
-                  </div>
-                </div>
+      <ImageUpload
+        label="Profile Image"
+        currentImage={doctor?.photoProfile || null}
+        onChange={(file) => setFormData({ ...formData, profileImage: file })}
+      />
+      <ImageUpload
+        label="Approval Document"
+        currentImage={doctor?.documentsProof || null}
+        onChange={(file) => setFormData({ ...formData, approvalDocument: file })}
+        accept=".pdf,.doc,.docx"
+        isDocument
+      />
+    </div>
 
                 {/* Form Actions */}
                 <div className="flex justify-end space-x-4 pt-6">

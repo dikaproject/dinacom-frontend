@@ -1,8 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // pages/admin/analytics/page.tsx
 "use client"
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Line, Bar } from 'react-chartjs-2';
+import { adminService } from '@/services/admin';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -29,8 +31,80 @@ ChartJS.register(
   Legend
 );
 
+interface AnalyticsOverview {
+  totalUsers: number;
+  totalDoctors: number;
+  totalRevenue: number;
+  totalProductsSold: number;
+}
+
+interface AnalyticsData {
+  overview?: AnalyticsOverview;
+  doctorsGrowth?: Array<{ createdAt: string; _count: { id: number } }>;
+  userAcquisition?: Array<{ createdAt: string; _count: { id: number } }>;
+  revenueAnalytics?: Array<{ createdAt: string; revenue: number; subtotal: number }>;
+  productSales?: Array<{
+    productName: string;
+    totalQuantity: number;
+    totalRevenue: number;
+  }>;
+}
+
 const Analytics = () => {
-  const [timeRange, setTimeRange] = useState('month');
+  const [timeRange, setTimeRange] = useState<'week' | 'month' | 'quarter' | 'year'>('month');
+  const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      setLoading(true);
+      try {
+        const data = await adminService.getAnalytics(timeRange);
+        setAnalyticsData(data);
+      } catch (error) {
+        console.error('Failed to fetch analytics:', error);
+      }
+      setLoading(false);
+    };
+
+    fetchAnalytics();
+  }, [timeRange]);
+
+  const formatChartData = (data: any[], dateKey: string, valueKey: string, label?: string) => {
+    if (!data || data.length === 0) return {
+      labels: [],
+      datasets: [{
+        label: label || 'No Data',
+        data: [],
+        borderColor: 'rgb(99, 102, 241)',
+        backgroundColor: 'rgba(99, 102, 241, 0.5)',
+      }]
+    };
+
+    // Sort data by date
+    const sortedData = [...data].sort((a, b) => 
+      new Date(a[dateKey]).getTime() - new Date(b[dateKey]).getTime()
+    );
+
+    const groupedData = sortedData.reduce((acc: any, item: any) => {
+      const date = new Date(item[dateKey]).toLocaleDateString();
+      const value = valueKey.includes('.') 
+        ? item[valueKey.split('.')[0]][valueKey.split('.')[1]] 
+        : item[valueKey];
+      acc[date] = (acc[date] || 0) + Number(value);
+      return acc;
+    }, {});
+
+    return {
+      labels: Object.keys(groupedData),
+      datasets: [{
+        label: label || 'Current Period',
+        data: Object.values(groupedData),
+        borderColor: 'rgb(99, 102, 241)',
+        backgroundColor: 'rgba(99, 102, 241, 0.5)',
+      }]
+    };
+  };
 
   const chartOptions = {
     responsive: true,
@@ -51,23 +125,49 @@ const Analytics = () => {
     },
   };
 
-  const mockData = {
-    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-    datasets: [
-      {
-        label: 'Current Period',
-        data: [65, 78, 90, 85, 95, 110],
-        borderColor: 'rgb(99, 102, 241)',
-        backgroundColor: 'rgba(99, 102, 241, 0.5)',
+  const formatCurrency = (value: number) => 
+    `Rp ${value.toLocaleString('id-ID')}`;
+
+  // Add this new function for product sales chart options
+  const getProductSalesChartOptions = () => ({
+    ...chartOptions,
+    scales: {
+      y: {
+        type: 'linear',
+        display: true,
+        position: 'left',
+        title: {
+          display: true,
+          text: 'Quantity'
+        }
       },
-      {
-        label: 'Previous Period',
-        data: [55, 65, 75, 70, 80, 95],
-        borderColor: 'rgb(156, 163, 175)',
-        backgroundColor: 'rgba(156, 163, 175, 0.5)',
-      },
-    ],
-  };
+      y1: {
+        type: 'linear',
+        display: true,
+        position: 'right',
+        title: {
+          display: true,
+          text: 'Revenue'
+        },
+        grid: {
+          drawOnChartArea: false
+        }
+      }
+    },
+    plugins: {
+      ...chartOptions.plugins,
+      tooltip: {
+        callbacks: {
+          label: function(context: any) {
+            const value = context.raw;
+            return context.dataset.label === 'Revenue'
+              ? `Revenue: ${formatCurrency(value)}`
+              : `Quantity: ${value} units`;
+          }
+        }
+      }
+    }
+  });
 
   return (
     <PageWrapper>
@@ -99,6 +199,49 @@ const Analytics = () => {
             </div>
           </div>
 
+          {/* Overview Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            {analyticsData?.overview && (
+              <>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-white p-6 rounded-xl shadow-sm"
+                >
+                  <h3 className="text-gray-500 text-sm">Total Users</h3>
+                  <p className="text-2xl font-semibold">{analyticsData.overview.totalUsers}</p>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                  className="bg-white p-6 rounded-xl shadow-sm"
+                >
+                  <h3 className="text-gray-500 text-sm">Total Doctors</h3>
+                  <p className="text-2xl font-semibold">{analyticsData.overview.totalDoctors}</p>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="bg-white p-6 rounded-xl shadow-sm"
+                >
+                  <h3 className="text-gray-500 text-sm">Total Revenue</h3>
+                  <p className="text-2xl font-semibold">{formatCurrency(analyticsData.overview.totalRevenue)}</p>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="bg-white p-6 rounded-xl shadow-sm"
+                >
+                  <h3 className="text-gray-500 text-sm">Products Sold</h3>
+                  <p className="text-2xl font-semibold">{analyticsData.overview.totalProductsSold}</p>
+                </motion.div>
+              </>
+            )}
+          </div>
+
           {/* Charts Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Doctors Growth */}
@@ -112,7 +255,14 @@ const Analytics = () => {
                 <p className="text-gray-600">Monthly registration trends</p>
               </div>
               <div className="h-80">
-                <Line options={chartOptions} data={mockData} />
+                {loading ? (
+                  <div>Loading...</div>
+                ) : (
+                  <Line 
+                    options={chartOptions} 
+                    data={formatChartData(analyticsData?.doctorsGrowth || [], 'createdAt', '_count.id')} 
+                  />
+                )}
               </div>
             </motion.div>
 
@@ -128,7 +278,14 @@ const Analytics = () => {
                 <p className="text-gray-600">New user registrations</p>
               </div>
               <div className="h-80">
-                <Bar options={chartOptions} data={mockData} />
+                {loading ? (
+                  <div>Loading...</div>
+                ) : (
+                  <Bar 
+                    options={chartOptions} 
+                    data={formatChartData(analyticsData?.userAcquisition || [], 'createdAt', '_count.id', 'New Users')} 
+                  />
+                )}
               </div>
             </motion.div>
 
@@ -144,31 +301,50 @@ const Analytics = () => {
                 <p className="text-gray-600">Monthly revenue breakdown</p>
               </div>
               <div className="h-80">
-                <Line
-                  options={{
-                    ...chartOptions,
-                    plugins: {
-                      ...chartOptions.plugins,
-                      tooltip: {
-                        ...chartOptions.plugins.tooltip,
-                        callbacks: {
-                          label: (context: { parsed: { y: number } }) => `Rp ${context.parsed.y.toLocaleString()}`,
+                {loading ? (
+                  <div>Loading...</div>
+                ) : (
+                  <Line
+                    options={{
+                      ...chartOptions,
+                      plugins: {
+                        ...chartOptions.plugins,
+                        tooltip: {
+                          callbacks: {
+                            label: function(context: any) {
+                              const label = context.dataset.label || '';
+                              const value = context.parsed.y;
+                              return `${label}: ${formatCurrency(value)}`;
+                            }
+                          }
+                        }
+                      }
+                    }}
+                    data={{
+                      labels: analyticsData?.revenueAnalytics?.map((item: any) => 
+                        new Date(item.createdAt).toLocaleDateString()
+                      ) || [],
+                      datasets: [
+                        {
+                          label: 'Total Revenue',
+                          data: analyticsData?.revenueAnalytics?.map((item: any) => item.revenue) || [],
+                          borderColor: 'rgb(99, 102, 241)',
+                          backgroundColor: 'rgba(99, 102, 241, 0.5)',
                         },
-                      },
-                    },
-                  }}
-                  data={{
-                    ...mockData,
-                    datasets: mockData.datasets.map(dataset => ({
-                      ...dataset,
-                      data: dataset.data.map(value => value * 1000000),
-                    })),
-                  }}
-                />
+                        {
+                          label: 'Net Revenue',
+                          data: analyticsData?.revenueAnalytics?.map((item: any) => item.subtotal) || [],
+                          borderColor: 'rgb(34, 197, 94)',
+                          backgroundColor: 'rgba(34, 197, 94, 0.5)',
+                        }
+                      ]
+                    }}
+                  />
+                )}
               </div>
             </motion.div>
 
-            {/* Product Sales */}
+            {/* Replace the Product Sales chart section with this updated version */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -180,13 +356,36 @@ const Analytics = () => {
                 <p className="text-gray-600">Top selling products</p>
               </div>
               <div className="h-80">
-                <Bar
-                  options={chartOptions}
-                  data={{
-                    ...mockData,
-                    labels: ['Product A', 'Product B', 'Product C', 'Product D', 'Product E', 'Product F'],
-                  }}
-                />
+                {loading ? (
+                  <div>Loading...</div>
+                ) : (
+                  <Bar
+                    options={getProductSalesChartOptions()}
+                    data={{
+                      labels: analyticsData?.productSales?.map((item: any) => 
+                        item.productName.length > 15 
+                          ? item.productName.substring(0, 15) + '...' 
+                          : item.productName
+                      ) || [],
+                      datasets: [
+                        {
+                          label: 'Quantity',
+                          data: analyticsData?.productSales?.map((item: any) => item.totalQuantity) || [],
+                          backgroundColor: 'rgba(99, 102, 241, 0.5)',
+                          borderColor: 'rgb(99, 102, 241)',
+                          yAxisID: 'y'
+                        },
+                        {
+                          label: 'Revenue',
+                          data: analyticsData?.productSales?.map((item: any) => item.totalRevenue) || [],
+                          backgroundColor: 'rgba(34, 197, 94, 0.5)',
+                          borderColor: 'rgb(34, 197, 94)',
+                          yAxisID: 'y1'
+                        }
+                      ]
+                    }}
+                  />
+                )}
               </div>
             </motion.div>
           </div>

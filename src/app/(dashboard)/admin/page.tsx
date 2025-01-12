@@ -1,48 +1,101 @@
 // pages/admin/dashboard/page.tsx
 "use client"
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
-  FiUsers, FiDollarSign, FiShoppingBag, FiUserPlus,
-  FiArrowUp, FiArrowDown, FiCalendar, FiSearch
+  FiUsers, FiDollarSign, FiShoppingBag, FiUserPlus, FiSearch
 } from 'react-icons/fi';
 import PageWrapper from '@/components/PageWrapper';
+import { adminService } from '@/services/admin';
 
 const AdminDashboard = () => {
+  const [stats, setStats] = useState<any>(null);
+  const [orders, setOrders] = useState<any[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
+  const [schedules, setSchedules] = useState<any[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState('date');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const [statsData, ordersData, usersData, schedulesData] = await Promise.all([
+          adminService.getDashboardStats(),
+          adminService.getRecentOrders(currentPage),
+          adminService.getRecentUsers(),
+          adminService.getDoctorSchedules()
+        ]);
+
+        setStats(statsData);
+        setOrders(ordersData);
+        setUsers(usersData);
+        setSchedules(schedulesData);
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      }
+    };
+
+    fetchDashboardData();
+  }, [currentPage]);
+
+  // Helper function for formatting currency
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('id-ID').format(amount);
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'PAID':
+        return 'bg-green-100 text-green-800';
+      case 'PENDING':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'EXPIRED':
+        return 'bg-red-100 text-red-800';
+      case 'FAILED':
+        return 'bg-red-100 text-red-800';
+      case 'CANCELLED':
+        return 'bg-gray-100 text-gray-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getAvatarUrl = (avatar: string | null) => {
+    if (!avatar) return '/default-avatar.jpg';
+    return `${process.env.NEXT_PUBLIC_API_URL}/uploads/profiles/${avatar}`;
+  };
+
   const statsCards = [
     {
       title: 'Total Doctors',
-      value: '24',
-      change: '+12%',
-      isPositive: true,
+      value: stats?.totalDoctors || '0',
+      change: `${stats?.doctorsGrowth.toFixed(1)}%`,
+      isPositive: stats?.doctorsGrowth > 0,
       icon: <FiUsers className="w-6 h-6" />,
       color: 'bg-blue-500'
     },
     {
       title: 'Total Users',
-      value: '1,234',
-      change: '+25%',
-      isPositive: true,
+      value: stats?.totalUsers || '0',
+      change: `${stats?.usersGrowth.toFixed(1)}%`,
+      isPositive: stats?.usersGrowth > 0,
       icon: <FiUserPlus className="w-6 h-6" />,
       color: 'bg-purple-500'
     },
     {
       title: 'Total Revenue',
-      value: 'Rp 45.6M',
-      change: '+18%',
-      isPositive: true,
+      value: `Rp ${formatCurrency(stats?.totalRevenue || 0)}`,
+      change: `${stats?.revenueGrowth.toFixed(1)}%`,
+      isPositive: stats?.revenueGrowth > 0,
       icon: <FiDollarSign className="w-6 h-6" />,
       color: 'bg-green-500'
     },
     {
       title: 'Total Products',
-      value: '156',
-      change: '-3%',
-      isPositive: false,
+      value: stats?.totalProducts || '0',
+      change: `${stats?.productsGrowth.toFixed(1)}%`,
+      isPositive: stats?.productsGrowth > 0,
       icon: <FiShoppingBag className="w-6 h-6" />,
       color: 'bg-orange-500'
     }
@@ -106,19 +159,22 @@ const AdminDashboard = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {/* Sample order data */}
-                  <tr>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">#12345</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">John Doe</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Prenatal Vitamins</td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                        Completed
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Rp 299.000</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">2024-03-15</td>
-                  </tr>
+                  {orders.map((order) => (
+                    <tr key={order.id}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{order.id}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{order.customer}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{order.product}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(order.status)}`}>
+                          {order.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        Rp {formatCurrency(order.amount)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{order.date}</td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
@@ -142,69 +198,43 @@ const AdminDashboard = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Doctor Schedule */}
-            <div className="bg-white rounded-lg shadow">
-              <div className="p-6 border-b border-gray-200">
-                <h2 className="text-lg font-medium text-gray-900">Doctor Schedule</h2>
-              </div>
-              <div className="p-6">
-                <div className="space-y-4">
-                  {/* Sample schedule */}
-                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                    <div className="flex items-center space-x-4">
-                      <div className="flex-shrink-0">
-                        <img
-                          className="h-10 w-10 rounded-full"
-                          src="/images/doctor-avatar.jpg"
-                          alt="Doctor"
-                        />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">Dr. Sarah Johnson</p>
-                        <p className="text-sm text-gray-500">09:00 AM - Consultation</p>
-                      </div>
-                    </div>
-                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                      Upcoming
-                    </span>
-                  </div>
-                </div>
-              </div>
+          {/* Recent Users */}
+          <div className="bg-white rounded-lg shadow">
+            <div className="p-6 border-b border-gray-200">
+              <h2 className="text-lg font-medium text-gray-900">Recent Users</h2>
             </div>
-
-            {/* Recent Users */}
-            <div className="bg-white rounded-lg shadow">
-              <div className="p-6 border-b border-gray-200">
-                <h2 className="text-lg font-medium text-gray-900">Recent Users</h2>
-              </div>
-              <div className="p-6">
-                <div className="space-y-4">
-                  {/* Sample user */}
-                  <div className="flex items-center justify-between">
+            <div className="p-6">
+              <div className="space-y-4">
+                {users.map((user) => (
+                  <div key={user.id} className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
                       <div className="flex-shrink-0">
-                        <img
-                          className="h-10 w-10 rounded-full"
-                          src="/images/user-avatar.jpg"
-                          alt="User"
-                        />
+                      <img
+                      className="h-10 w-10 rounded-full object-cover"
+                      src={getAvatarUrl(user.avatar)}
+                      alt={user.name}
+                      onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
+                        e.currentTarget.src = '/default-avatar.jpg';
+                      }}
+                    />
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-gray-900">Jane Smith</p>
-                        <p className="text-sm text-gray-500">Joined March 15, 2024</p>
+                        <p className="text-sm font-medium text-gray-900">{user.name}</p>
+                        <p className="text-sm text-gray-500">
+                          Joined {new Date(user.joinDate).toLocaleDateString('id-ID')}
+                        </p>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
                       <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                        Active
+                        {user.status}
                       </span>
                       <button className="p-1 rounded-full hover:bg-gray-100">
                         <FiSearch className="w-4 h-4 text-gray-400" />
                       </button>
                     </div>
                   </div>
-                </div>
+                ))}
               </div>
             </div>
           </div>
@@ -214,4 +244,4 @@ const AdminDashboard = () => {
   );
 };
 
-export default AdminDashboard;  
+export default AdminDashboard;
