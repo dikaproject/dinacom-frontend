@@ -4,8 +4,8 @@ import { useState, useEffect } from "react";
 import { FiPlus, FiEdit2, FiTrash2, FiSearch, FiUser } from "react-icons/fi";
 import Link from "next/link";
 import PageWrapper from "@/components/PageWrapper";
-import { userService } from "@/services/user";
-import { User, UserRole } from "@/types/user";
+// import { userService } from "@/services/user";
+// import { User, UserRole } from "@/types/user";
 
 const UsersList = () => {
   const [users, setUsers] = useState<User[]>([]);

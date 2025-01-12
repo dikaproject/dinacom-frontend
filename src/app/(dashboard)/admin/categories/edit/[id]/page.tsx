@@ -4,11 +4,13 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { FiSave, FiArrowLeft } from 'react-icons/fi';
 import Link from 'next/link';
+import { use } from 'react';
 import PageWrapper from '@/components/PageWrapper';
 import { productCategoryService } from '@/services/productCategory';
 import { ProductCategory } from '@/types/productCategory';
 
-const EditCategory = ({ params }: { params: { id: string } }) => {
+const EditCategory = ({ params }: { params: Promise<{ id: string }> }) => {
+  const resolvedParams = use(params);
   const router = useRouter();
   const [formData, setFormData] = useState<ProductCategory>({
     id: '',
@@ -21,17 +23,18 @@ const EditCategory = ({ params }: { params: { id: string } }) => {
   useEffect(() => {
     const fetchCategory = async () => {
       try {
-        const category = await productCategoryService.getById(params.id);
+        const category = await productCategoryService.getById(resolvedParams.id);
         setFormData(category);
       } catch (error) {
+        console.error(error);
         setError('Failed to fetch category');
       }
     };
 
-    if (params.id) {
+    if (resolvedParams.id) {
       fetchCategory();
     }
-  }, [params.id]);
+  }, [resolvedParams.id]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,7 +42,7 @@ const EditCategory = ({ params }: { params: { id: string } }) => {
     setError('');
 
     try {
-      await productCategoryService.update(params.id, formData);
+      await productCategoryService.update(resolvedParams.id, formData);
       router.push('/admin/categories');
     } catch (error: any) {
       setError(error?.response?.data?.message || 'Failed to update category');

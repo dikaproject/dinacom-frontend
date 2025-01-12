@@ -1,15 +1,20 @@
 // pages/admin/doctors/add/page.tsx
 "use client"
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { FiArrowLeft, FiSave } from 'react-icons/fi';
 import Link from 'next/link';
 import PageWrapper from '@/components/PageWrapper';
+import { adminService } from '@/services/admin';
+import toast from 'react-hot-toast';
+import { LayananKesehatan } from '@/types/admin';
+import ImageUpload from '@/components/ImageUpload';
 
 const AddDoctor = () => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [healthcareProviders, setHealthcareProviders] = useState<LayananKesehatan[]>([]);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -28,43 +33,47 @@ const AddDoctor = () => {
     approvalDocument: null as File | null
   });
 
-  // Mock healthcare providers for dropdown
-  const healthcareProviders = [
-    { id: '1', name: 'RS Premier Bintaro' },
-    { id: '2', name: 'RSCM Jakarta' },
-    // Add more providers
-  ];
+  useEffect(() => {
+    const fetchProviders = async () => {
+      try {
+        const providers = await adminService.getHealthcareProviders();
+        setHealthcareProviders(providers);
+      } catch (error) {
+        toast.error('Failed to fetch healthcare providers');
+      }
+    };
+
+    fetchProviders();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
 
-    // Add validation
-    if (!formData.strNumber.startsWith('STR')) {
-      setError('STR Number must start with STR');
-      setIsLoading(false);
-      return;
-    }
-
-    if (!formData.sipNumber.startsWith('SIP')) {
-      setError('SIP Number must start with SIP');
-      setIsLoading(false);
-      return;
-    }
-
-    if (!formData.phoneNumber.startsWith('62')) {
-      setError('Phone number must start with country code 62');
-      setIsLoading(false);
-      return;
-    }
-
     try {
-      // Add API call here
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await adminService.createDoctor({
+        email: formData.email,
+        password: formData.password,
+        fullName: formData.fullName,
+        strNumber: formData.strNumber,
+        sipNumber: formData.sipNumber,
+        phoneNumber: formData.phoneNumber,
+        provinsi: formData.province,
+        kabupaten: formData.district,
+        kecamatan: formData.subdistrict,
+        address: formData.address,
+        codePos: formData.postalCode,
+        layananKesehatanId: formData.healthcareProviderId,
+        educationBackground: formData.educationBackground,
+        photoProfile: formData.profileImage || undefined,
+        documentsProof: formData.approvalDocument || undefined
+      });
+      
+      toast.success('Doctor created successfully');
       router.push('/admin/doctors');
-    } catch {
-      setError('Failed to create doctor');
+    } catch (error: any) {
+      setError(error.response?.data?.message || 'Failed to create doctor');
     } finally {
       setIsLoading(false);
     }
@@ -230,18 +239,18 @@ const AddDoctor = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Healthcare Provider</label>
                   <select
-                    required
-                    value={formData.healthcareProviderId}
-                    onChange={(e) => setFormData({ ...formData, healthcareProviderId: e.target.value })}
-                    className={inputClasses}
-                  >
-                    <option value="" className="text-gray-900">Select Healthcare Provider</option>
-                    {healthcareProviders.map(provider => (
-                      <option key={provider.id} value={provider.id} className="text-gray-900">
-                        {provider.name}
-                      </option>
-                    ))}
-                  </select>
+    required
+    value={formData.healthcareProviderId}
+    onChange={(e) => setFormData({ ...formData, healthcareProviderId: e.target.value })}
+    className={inputClasses}
+  >
+    <option value="">Select Healthcare Provider</option>
+    {healthcareProviders.map(provider => (
+      <option key={provider.id} value={provider.id}>
+        {provider.name}
+      </option>
+    ))}
+  </select>
                 </div>
 
                 <div>
@@ -257,32 +266,20 @@ const AddDoctor = () => {
 
                 {/* File Uploads */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Profile Image</label>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) setFormData({ ...formData, profileImage: file });
-                      }}
-                      className="mt-1 block w-full"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Approval Document</label>
-                    <input
-                      type="file"
-                      accept=".pdf,.doc,.docx"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) setFormData({ ...formData, approvalDocument: file });
-                      }}
-                      className="mt-1 block w-full"
-                    />
-                  </div>
-                </div>
+      <ImageUpload
+        label="Profile Image"
+        currentImage={null}
+        onChange={(file) => setFormData({ ...formData, profileImage: file })}
+        accept="image/*"
+      />
+      <ImageUpload
+        label="Approval Document"
+        currentImage={null}
+        onChange={(file) => setFormData({ ...formData, approvalDocument: file })}
+        accept="application/pdf,image/*"
+        isDocument={true}
+      />
+    </div>
 
                 {/* Form Actions */}
                 <div className="flex justify-end space-x-4 pt-6">

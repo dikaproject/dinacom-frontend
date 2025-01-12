@@ -1,51 +1,86 @@
-import { CartProduct } from '@/types/cart';
+import api from './api';
+import { CartSummary, ShippingAddress } from '@/types/cart';
 
 export const cartService = {
-  getCart: (): CartProduct[] => {
-    if (typeof window === 'undefined') return [];
-    const cart = localStorage.getItem('cart');
-    return cart ? JSON.parse(cart) : [];
-  },
-
-  addToCart: (product: any, quantity: number): void => {
-    const cart = cartService.getCart();
-    const existingItem = cart.find(item => item.productId === product.id);
-
-    if (existingItem) {
-      existingItem.quantity += quantity;
-    } else {
-      cart.push({
-        id: Date.now().toString(),
-        productId: product.id,
-        quantity,
-        product: {
-          id: product.id,
-          title: product.title,
-          price: product.price,
-          thumbnail: product.thumbnail,
-          description: product.description
-        }
-      });
+  getCart: async () => {
+    try {
+        const { data } = await api.get('/cart/user');
+        return data;
+    } catch (error) {
+        console.error('Error fetching cart:', error);
+        throw error;
     }
+},
 
-    localStorage.setItem('cart', JSON.stringify(cart));
-  },
+getShippingAddresses: async () => {
+    try {
+        const { data } = await api.get('/cart/shipping-addresses');
+        return data;
+    } catch (error) {
+        console.error('Error fetching addresses:', error);
+        throw error;
+    }
+},
 
-  updateQuantity: (productId: string, quantity: number): void => {
-    const cart = cartService.getCart();
-    const updatedCart = cart.map(item => 
-      item.productId === productId ? { ...item, quantity } : item
-    );
-    localStorage.setItem('cart', JSON.stringify(updatedCart));
-  },
+addShippingAddress: async (address: Omit<ShippingAddress, 'id'>) => {
+    try {
+        const { data } = await api.post('/cart/shipping-address', address);
+        return data;
+    } catch (error) {
+        console.error('Error adding address:', error);
+        throw error;
+    }
+},
 
-  removeFromCart: (productId: string): void => {
-    const cart = cartService.getCart();
-    const updatedCart = cart.filter(item => item.productId !== productId);
-    localStorage.setItem('cart', JSON.stringify(updatedCart));
-  },
+calculateFees: (subtotal: number): CartSummary => {
+  const platformFee = Math.round(subtotal * 0.05); // 5%
+  const tax = Math.round(subtotal * 0.12); // 12%
+  const shippingCost = 10000; // Fixed 10k shipping
+  
+  return {
+    subtotal,
+    platformFee,
+    tax,
+    shippingCost,
+    total: subtotal + platformFee + tax + shippingCost
+  };
+},
 
-  clearCart: (): void => {
-    localStorage.removeItem('cart');
+  addToCart: async (productId: string, quantity: number = 1) => {
+    try {
+        const { data } = await api.post('/cart', {
+            productId,
+            quantity
+        });
+        return data;
+    } catch (error) {
+        console.error('Error adding to cart:', error);
+        throw error;
+    }
+},
+
+updateQuantity: async (cartProductId: string, quantity: number) => {
+  try {
+      if (quantity <= 0) {
+          return await cartService.removeFromCart(cartProductId);
+      }
+      
+      const { data } = await api.patch(`/cart/${cartProductId}`, {
+          quantity
+      });
+      return data;
+  } catch (error) {
+      console.error('Error updating quantity:', error);
+      throw error;
   }
+},
+removeFromCart: async (productId: string) => {
+  try {
+      await api.delete(`/cart/${productId}`);
+      return { success: true };
+  } catch (error) {
+      console.error('Error removing from cart:', error);
+      throw error;
+  }
+}
 };

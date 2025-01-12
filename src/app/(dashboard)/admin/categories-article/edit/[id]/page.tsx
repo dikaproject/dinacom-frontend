@@ -1,14 +1,18 @@
 // pages/admin/categories/edit/[id]/page.tsx
 "use client"
+
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { FiSave, FiArrowLeft } from 'react-icons/fi';
 import Link from 'next/link';
+import { use } from 'react';
 import PageWrapper from '@/components/PageWrapper';
 import { articleCategoryService } from '@/services/articleCategory';
 import { ArticleCategory } from '@/types/articleCategory';
+import toast from 'react-hot-toast';
 
-const EditCategory = ({ params }: { params: { id: string } }) => {
+const EditCategory = ({ params }: { params: Promise<{ id: string }> }) => {
+  const resolvedParams = use(params);
   const router = useRouter();
   const [formData, setFormData] = useState<ArticleCategory>({
     id: '',
@@ -21,17 +25,17 @@ const EditCategory = ({ params }: { params: { id: string } }) => {
   useEffect(() => {
     const fetchCategory = async () => {
       try {
-        const category = await articleCategoryService.getById(params.id);
+        const category = await articleCategoryService.getById(resolvedParams.id);
         setFormData(category);
       } catch (error) {
         setError('Failed to fetch category');
       }
     };
 
-    if (params.id) {
+    if (resolvedParams.id) {
       fetchCategory();
     }
-  }, [params.id]);
+  }, [resolvedParams.id]);
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const name = e.target.value;
@@ -45,7 +49,8 @@ const EditCategory = ({ params }: { params: { id: string } }) => {
     setError('');
 
     try {
-      await articleCategoryService.update(params.id, formData);
+      await articleCategoryService.update(resolvedParams.id, formData);
+      toast.success('edit category article successfuly')
       router.push('/admin/categories-article');
     } catch (error: any) {
       setError(error?.response?.data?.message || 'Failed to update category');

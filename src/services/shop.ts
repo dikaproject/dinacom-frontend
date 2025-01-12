@@ -16,6 +16,16 @@ export const shopService = {
     }
   },
 
+  getProductBySlug: async (slug: string) => {
+    try {
+      const response = await api.get(`/product/by-slug/${slug}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching product:', error);
+      throw error;
+    }
+  },
+
   getProductById: async (id: string): Promise<Product> => {
     try {
       const response = await api.get(`/product/${id}`);
