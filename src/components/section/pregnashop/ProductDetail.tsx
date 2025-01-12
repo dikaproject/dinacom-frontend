@@ -8,10 +8,10 @@ import { Product } from '@/types/shop';
 import { shopService } from '@/services/shop';
 import { cartService } from '@/services/cart';
 import { useRouter } from 'next/navigation';
-// import { toast } from 'react-hot-toast';
+import { toast } from 'react-hot-toast';
 
 const ProductDetail = () => {
-  const { id } = useParams();
+  const params = useParams();
   const [quantity, setQuantity] = useState(1);
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
@@ -22,30 +22,34 @@ const ProductDetail = () => {
     const fetchProduct = async () => {
       try {
         setLoading(true);
-        const data = await shopService.getProductById(id as string);
+        const data = await shopService.getProductBySlug(params.slug as string);
         setProduct(data);
-        setError(null);
-      } catch (err) {
+      } catch (error) {
         setError('Failed to fetch product details');
-        console.error(err);
+        console.error(error);
       } finally {
         setLoading(false);
       }
     };
 
-    if (id) {
+    if (params.slug) {
       fetchProduct();
     }
-  }, [id]);
+  }, [params.slug]);
 
   const handleAddToCart = async () => {
     try {
-      await cartService.addToCart(product, quantity);
-      router.push('/cart');
+        if (!product?.id) {
+            throw new Error('Product not found');
+        }
+        await cartService.addToCart(product.id, quantity);
+        toast.success('Added to cart');
+        router.push('/cart');
     } catch (error) {
-      console.error('Failed to add to cart', error);
+        console.error('Failed to add to cart:', error);
+        toast.error('Failed to add to cart');
     }
-  };
+};
 
   if (loading) {
     return (

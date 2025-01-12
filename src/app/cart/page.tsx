@@ -1,16 +1,11 @@
 "use client"
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { cartService } from '@/services/cart';
+import Cart from '@/components/section/cart/cart';
 import { CartProduct } from '@/types/cart';
+import { toast } from 'react-hot-toast';
 
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
-import PageWrapper from '@/components/PageWrapper';
-import Cart from '@/components/section/cart/Cart';
-
-const CartPage = () => {
-  const router = useRouter();
+export default function CartPage() {
   const [cartItems, setCartItems] = useState<CartProduct[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -23,21 +18,11 @@ const CartPage = () => {
       const data = await cartService.getCart();
       setCartItems(data);
     } catch (error) {
-      console.error('Failed to load cart');
+      toast.error('Failed to load cart');
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <PageWrapper>
-      <main className="min-h-screen">
-        <Navbar />
-        <Cart cartItems={cartItems} loading={loading} />
-        <Footer />
-      </main>
-    </PageWrapper>
-  );
+  return <Cart cartItems={cartItems} loading={loading} />;
 }
-
-export default CartPage;

@@ -112,7 +112,7 @@ const Shop = () => {
             ))
           ) : (
             filteredProducts.map((product) => (
-              <Link href={`/pregnashop/${product.id}`} key={product.id}>
+              <Link href={`/pregnashop/${product.slug}`} key={product.id}>
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
