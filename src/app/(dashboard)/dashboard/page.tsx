@@ -84,46 +84,56 @@ export default function DashboardPage() {
 
   const { hours, minutes } = useCountdown(checkupStatus.nextCheckup);
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        const [profileResponse, checkupsData] = await Promise.all([
-          pregnancyService.getProfile(),
-          pregnancyService.getDailyCheckups()
-        ]);
-        
-        const profileData = profileResponse.profile;
-        setProfile(profileData);
-        setCheckups(checkupsData);
-        
-        const status = getCheckupStatus(checkupsData);
-        setCheckupStatus(status);
-    
-        if (profileData?.pregnancyWeek) {
-          const healthData = {
-            trimester: profileData.trimester,
-            week: profileData.pregnancyWeek,
-          };
+       useEffect(() => {
+      const fetchDashboardData = async () => {
+        setLoading(true);
+        try {
+          const [profileResponse, checkupsData] = await Promise.all([
+            pregnancyService.getProfile(true),
+            pregnancyService.getDailyCheckups(true)
+          ]);
           
-          const aiResponse = await pregnancyService.getAIRecommendations(healthData) as unknown as AIResponse;
-          if (aiResponse?.analysis) {
-            const allRecommendations = [
-              ...(aiResponse.analysis.weeklyRecommendations || []),
-              ...(aiResponse.analysis.nutritionRecommendations || []),
-              ...(aiResponse.analysis.exerciseSuggestions || [])
-            ].filter(Boolean);
-            setAiRecommendations(allRecommendations);
+          if (profileResponse?.profile) {
+            setProfile(profileResponse.profile);
+            
+            if (profileResponse.profile.pregnancyWeek) {
+              try {
+                const healthData = {
+                  trimester: profileResponse.profile.trimester,
+                  week: profileResponse.profile.pregnancyWeek,
+                };
+                
+                const aiResponse = await pregnancyService.getAIRecommendations(healthData);
+                if (aiResponse && aiResponse.analysis) {
+                  const recommendations = [
+                    ...aiResponse.analysis.weeklyRecommendations,
+                    ...aiResponse.analysis.nutritionRecommendations,
+                    ...aiResponse.analysis.exerciseSuggestions
+                  ];
+                  setAiRecommendations(recommendations);
+                }
+              } catch (error) {
+                console.error('AI recommendations error:', error);
+                setAiRecommendations([]);
+              }
+            }
           }
-        } 
-      } catch (error) {
-        console.error('Dashboard data error:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-  
-    fetchDashboardData();
-  }, []);
+          
+          if (Array.isArray(checkupsData)) {
+            setCheckups(checkupsData);
+            const status = getCheckupStatus(checkupsData);
+            setCheckupStatus(status);
+          }
+          
+        } catch (error) {
+          console.error('Dashboard data error:', error);
+        } finally {
+          setLoading(false);
+        }
+      };
+    
+      fetchDashboardData();
+    }, []);
 
   // Helper functions
   const getTrimmester = (week: number): string => {

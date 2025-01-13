@@ -7,6 +7,7 @@ import { PregnancyProfile } from "@/types/pregnancy";
 import { pregnancyService } from "@/services/pregnancy"; 
 import Image from "next/image";
 import { FiUpload } from "react-icons/fi";
+import toast from "react-hot-toast";
 
 const fadeIn = {
   initial: { opacity: 0, y: 20 },
@@ -20,6 +21,7 @@ const CreateProfileForm = () => {
   const [error, setError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  
 
   const [formData, setFormData] = useState<PregnancyProfile>({
     fullName: "",
@@ -43,14 +45,26 @@ const CreateProfileForm = () => {
     }));
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Add file size validation
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        toast.error('Image size should not exceed 5MB');
+        return;
+      }
+  
+      // Add file type validation
+      if (!file.type.startsWith('image/')) {
+        toast.error('Please upload an image file');
+        return;
+      }
+  
       setFormData(prev => ({
         ...prev,
         photoProfile: file
       }));
-
+  
       // Create preview URL
       const reader = new FileReader();
       reader.onloadend = () => {

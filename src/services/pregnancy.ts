@@ -16,33 +16,40 @@ import {
 export const pregnancyService = {
   // Profile Management
   createProfile: async (formData: FormData) => {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/pregnancy/profile`, {
-      method: 'POST',
-      credentials: 'include',
-      body: formData, // FormData will automatically set the correct content-type
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to create profile');
+    try {
+      const response = await api.post('/pregnancy/profile', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Create profile error:', error);
+      throw error;
     }
-
-    return response.json();
   },
 
-  getProfile: async (): Promise<PregnancyResponse> => {
+  getProfile: async (silent = false): Promise<PregnancyResponse | null> => {
     try {
       const response = await api.get<PregnancyResponse>('/pregnancy/profile');
       if (!response.data || !response.data.profile) {
-        throw new Error('Invalid profile data received');
+        if (!silent) {
+          throw new Error('Invalid profile data received');
+        }
+        return null;
       }
       return response.data;
     } catch (error) {
-      if (error instanceof AxiosError && error.response?.data) {
-        throw new Error(error.response.data.message);
+      if (!silent) {
+        if (error instanceof AxiosError && error.response?.data) {
+          throw new Error(error.response.data.message);
+        }
+        throw new Error('Failed to fetch pregnancy profile');
       }
-      throw new Error('Failed to fetch pregnancy profile');
+      return null;
     }
   },
+
 
   updateProfile: async (formData: FormData): Promise<UpdateResponse> => {
     try {
@@ -85,15 +92,18 @@ export const pregnancyService = {
     }
   },
 
-  getDailyCheckups: async () => {
+  getDailyCheckups: async (silent = false) => {
     try {
       const response = await api.get<DailyCheckup[]>('/pregnancy/daily-checkup');
       return response.data;
     } catch (error) {
-      if (error instanceof AxiosError && error.response?.data) {
-        throw new Error(error.response.data.message);
+      if (!silent) {
+        if (error instanceof AxiosError && error.response?.data) {
+          throw new Error(error.response.data.message);
+        }
+        throw new Error('Failed to fetch daily checkups');
       }
-      throw new Error('Failed to fetch daily checkups');
+      return [];
     }
   },
 
