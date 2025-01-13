@@ -2,6 +2,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { pregnancyService } from '@/services/pregnancy';
 
 interface ProtectedLayoutProps {
   children: React.ReactNode;
@@ -24,6 +25,21 @@ const ProtectedLayout = ({ children, allowedRoles }: ProtectedLayoutProps) => {
       }
     }
   }, [user, isLoading, router, allowedRoles]);
+
+  useEffect(() => {
+    const checkProfile = async () => {
+      if (user?.role === 'USER') {
+        const profile = await pregnancyService.getProfile(true);
+        if (!profile) {
+          router.replace('/create-profile');
+        }
+      }
+    };
+
+    if (!isLoading && user) {
+      checkProfile();
+    }
+  }, [user, isLoading, router]);
 
   if (isLoading) {
     return <div>Loading...</div>;

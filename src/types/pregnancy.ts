@@ -144,10 +144,9 @@ export interface HealthInsightResponse {
 }
 
 export interface AIResponse {
-  success: boolean;
   analysis: {
     weeklyRecommendations: string[];
     nutritionRecommendations: string[];
     exerciseSuggestions: string[];
-  };
+  }
 }
