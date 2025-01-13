@@ -150,7 +150,7 @@ const ProductDetail = () => {
                   className="w-full py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center justify-center"
                 >
                   <FiShoppingCart className="mr-2" />
-                  <span>Add to Cart</span>
+                  <span className="text-white">Add to Cart</span>
                 </motion.button>
               </div>
             </div>

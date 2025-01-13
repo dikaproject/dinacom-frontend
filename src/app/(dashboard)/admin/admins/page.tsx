@@ -1,39 +1,81 @@
 // pages/admin/admins/page.tsx
-"use client"
-import { useState } from 'react';
-import { FiPlus, FiEdit2, FiTrash2, FiSearch } from 'react-icons/fi';
-import Link from 'next/link';
-import PageWrapper from '@/components/PageWrapper';
+"use client";
+import { useState, useEffect } from "react";
+import { FiPlus, FiEdit2, FiTrash2, FiSearch } from "react-icons/fi";
+import Link from "next/link";
+import PageWrapper from "@/components/PageWrapper";
+import { userAdminService } from "@/services/userAdmin";
+import { UserAdmin } from "@/types/userAdmin";
+import { toast } from "react-hot-toast";
 
 const AdminList = () => {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [admins, setAdmins] = useState<UserAdmin[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
-  // Mock data
-  const admins = [
-    {
-      id: 1,
-      name: 'John Admin',
-      email: 'john@admin.com',
-      role: 'SUPERADMIN',
-      status: 'Active',
-      joinDate: '2024-01-15'
-    },
-    {
-      id: 2,
-      name: 'Sarah Admin',
-      email: 'sarah@admin.com',
-      role: 'ADMIN',
-      status: 'Active',
-      joinDate: '2024-01-20'
-    }
-  ];
+  useEffect(() => {
+    fetchAdmins();
+  }, []);
 
-  const handleDelete = async (id: number) => {
-    if (window.confirm('Are you sure you want to delete this admin?')) {
-      // Add delete API call
-      console.log(`Deleting admin with id: ${id}`);
+  const fetchAdmins = async () => {
+    try {
+      const data = await userAdminService.getAll();
+      setAdmins(data);
+      setError(""); // Clear error on success
+    } catch (err) {
+      console.error("Error fetching admins:", err);
+      setError("Failed to fetch admins. Please try again.");
+      toast.error("Failed to load admins, please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
+
+  const handleDelete = async (id: string) => {
+    if (window.confirm("Are you sure you want to delete this admin?")) {
+      try {
+        await userAdminService.delete(id);
+        setAdmins(admins.filter((admin) => admin.id !== id));
+        toast.success("Admin deleted successfully");
+      } catch (err) {
+        console.error("Error deleting admin:", err);
+        toast.error("Failed to delete admin");
+      }
+    }
+  };
+
+  const filteredAdmins = admins.filter((admin) =>
+    admin.email.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  if (isLoading) {
+    return (
+      <PageWrapper>
+        <main className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div>Loading...</div>
+        </main>
+      </PageWrapper>
+    );
+  }
+
+  if (!isLoading && error) {
+    return (
+      <PageWrapper>
+        <main className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="text-center">
+            <p className="text-red-600 font-semibold">{error}</p>
+            <button
+              onClick={fetchAdmins}
+              className="mt-4 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+            >
+              Retry
+            </button>
+          </div>
+        </main>
+      </PageWrapper>
+    );
+  }
 
   return (
     <PageWrapper>
@@ -51,10 +93,10 @@ const AdminList = () => {
               <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search admins..."
+                placeholder="Search by email..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full sm:w-80 pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-900"
+                className="w-full sm:w-80 pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent"
               />
             </div>
             <Link
@@ -71,19 +113,10 @@ const AdminList = () => {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Name
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Email
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Role
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Join Date
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Actions
@@ -91,26 +124,21 @@ const AdminList = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {admins.map((admin) => (
+                {filteredAdmins.map((admin) => (
                   <tr key={admin.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{admin.name}</div>
-                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-600">{admin.email}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
+                      <span
+                        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          admin.role === "ADMIN"
+                            ? "bg-purple-100 text-purple-800"
+                            : "bg-gray-100 text-gray-800"
+                        }`}
+                      >
                         {admin.role}
                       </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                        {admin.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      {admin.joinDate}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <Link
@@ -128,6 +156,16 @@ const AdminList = () => {
                     </td>
                   </tr>
                 ))}
+                {filteredAdmins.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={3}
+                      className="px-6 py-4 text-center text-gray-500"
+                    >
+                      No admins found
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>

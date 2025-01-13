@@ -71,7 +71,7 @@ const ArticlesList = () => {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Article</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Categories</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created At</th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
@@ -99,10 +99,17 @@ const ArticlesList = () => {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
-                        {article.category}
-                      </span>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-wrap gap-1">
+                        {article.categories.map((category) => (
+                          <span
+                            key={category.id}
+                            className="px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800"
+                          >
+                            {category.slug}
+                          </span>
+                        ))}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {article.createdAt}

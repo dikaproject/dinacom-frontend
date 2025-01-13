@@ -5,6 +5,16 @@ export const articleCategoryService = {
     getAll: async (): Promise<ArticleCategory[]> => {
         try {
             const response = await api.get('/article-category');
+            // Add type checking and data transformation
+            if (!Array.isArray(response.data)) {
+                // If response.data is not an array but has a data property that is an array
+                if (response.data.data && Array.isArray(response.data.data)) {
+                    return response.data.data;
+                }
+                // If response is not in expected format, return empty array
+                console.error('Unexpected response format:', response.data);
+                return [];
+            }
             return response.data;
         } catch (error) {
             console.error('Error fetching categories:', error);
