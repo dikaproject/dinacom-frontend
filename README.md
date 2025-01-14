@@ -22,7 +22,7 @@ PregnaCare is a website application designed to support and empower pregnant wom
 
 ## Account
 
-Link Demo Website : https://wasteless.intechsosmed.my.id
+Link Demo Website : https://dinacom.intechofficial.com
 
 ---
 - email : admin@gmail.com (Demo Admin)
