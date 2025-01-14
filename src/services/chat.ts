@@ -9,63 +9,54 @@ class ChatService {
   private listeners: Map<string, Function[]> = new Map();
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
-  private lastMessageTime: number | null = null;
-  private connectionAttempts = 0;
-  private maxConnectionAttempts = 3;
   private messageQueue: Array<any> = [];
   private isConnecting = false;
   private connectionPromise: Promise<boolean> | null = null;
 
   async connect() {
-    if (this.socket?.connected) {
-      return true;
-    }
-
-    if (this.isConnecting) {
-      return this.connectionPromise;
-    }
+    if (this.socket?.connected) return true;
+    if (this.isConnecting) return this.connectionPromise;
 
     this.isConnecting = true;
-    this.connectionPromise = new Promise(async (resolve, reject) => {
+    this.connectionPromise = new Promise((resolve, reject) => {
       try {
-        if (this.connectionAttempts >= this.maxConnectionAttempts) {
-          // Reset connection attempts instead of rejecting immediately
-          this.connectionAttempts = 0;
-          await new Promise(r => setTimeout(r, 1000)); // Add delay before retry
-        }
+        const socketUrl = process.env.NODE_ENV === 'production' 
+          ? 'https://dinacom.intechofficial.com'
+          : 'http://localhost:5000';
 
-        this.connectionAttempts++;
-        
-        this.socket = io(process.env.NEXT_PUBLIC_API_SOCKET, {
-          withCredentials: true,
+        this.socket = io(socketUrl, {
+          path: '/socket.io',
+          transports: ['polling', 'websocket'], // Start with polling first
+          secure: process.env.NODE_ENV === 'production',
+          rejectUnauthorized: false,
           reconnection: true,
           reconnectionAttempts: 5,
           reconnectionDelay: 1000,
-          timeout: 10000,
-          transports: ['websocket', 'polling'], // Try websocket first
-          forceNew: false // Changed to false to reuse existing connection
+          timeout: 20000,
+          forceNew: true,
+          withCredentials: true
         });
 
-        // Setup connection verification with timeout
-        const connectionTimeout = setTimeout(() => {
+        // Connection timeout
+        const timeout = setTimeout(() => {
           if (!this.socket?.connected) {
             this.socket?.disconnect();
             this.isConnecting = false;
             reject(new Error('Connection timeout'));
           }
-        }, 10000);
+        }, 20000);
 
         this.socket.on('connect', () => {
-          clearTimeout(connectionTimeout);
-          this.connectionAttempts = 0;
+          clearTimeout(timeout);
+          console.log('Socket connected:', this.socket?.id);
           this.isConnecting = false;
           this.setupSocketListeners();
           resolve(true);
         });
 
         this.socket.on('connect_error', (error) => {
-          console.error('Connection error:', error);
-          clearTimeout(connectionTimeout);
+          clearTimeout(timeout);
+          console.error('Socket connect error:', error);
           this.isConnecting = false;
           reject(error);
         });
