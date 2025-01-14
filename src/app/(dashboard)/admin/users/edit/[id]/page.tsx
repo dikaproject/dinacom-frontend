@@ -8,7 +8,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import PageWrapper from '@/components/PageWrapper';
 import { patientService } from '@/services/patient';
-import { Patient, PatientFormData } from '@/types/patient';
+import { PatientFormData } from '@/types/patient';
 import { toast } from 'react-hot-toast';
 
 const EditPatient = ({ params }: { params: Promise<{ id: string }> }) => {
@@ -29,10 +29,10 @@ const EditPatient = ({ params }: { params: Promise<{ id: string }> }) => {
       reminderTime: '',
       address: '',
       bloodType: '',
-      height: '',
+      height: 0, // Changed to number
       pregnancyStartDate: '',
     },
-    photoProfile: null
+    photoProfile: undefined // Changed to undefined
   });
 
   useEffect(() => {
@@ -49,10 +49,10 @@ const EditPatient = ({ params }: { params: Promise<{ id: string }> }) => {
             reminderTime: patient.profile.reminderTime,
             address: patient.profile.address,
             bloodType: patient.profile.bloodType,
-            height: patient.profile.height?.toString() || '',
+            height: Number(patient.profile.height) || 0,
             pregnancyStartDate: new Date(patient.profile.pregnancyStartDate).toISOString().split('T')[0],
           },
-          photoProfile: null
+          photoProfile: undefined
         });
 
         if (patient.profile.photoProfile) {
@@ -97,8 +97,8 @@ const EditPatient = ({ params }: { params: Promise<{ id: string }> }) => {
       await patientService.update(id, formData);
       toast.success('Patient updated successfully');
       router.push('/admin/patients');
-    } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || 'Failed to update patient';
+    } catch (error: unknown) {
+      const errorMessage = (error as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to update patient';
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -298,7 +298,7 @@ const EditPatient = ({ params }: { params: Promise<{ id: string }> }) => {
                       value={formData.profile.height}
                       onChange={(e) => setFormData({
                         ...formData,
-                        profile: { ...formData.profile, height: e.target.value }
+                        profile: { ...formData.profile, height: Number(e.target.value) }
                       })}
                       className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-400"
                     />

@@ -51,6 +51,15 @@ interface RecentUser {
   avatar?: string;
 }
 
+interface DoctorSchedule {
+  id: string;
+  doctorId: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  status: string;
+}
+
 export const adminService = {
   getDoctors: async (): Promise<Doctor[]> => {
     try {
@@ -107,7 +116,7 @@ verifyDoctor: async (doctorId: string, status: 'APPROVED' | 'REJECTED') => {
   updateDoctor: async (data: UpdateDoctorData) => {
     try {
       const formData = new FormData();
-      const { photoProfile, documentsProof, ...restData } = data;
+      const { id, photoProfile, documentsProof, ...restData } = data;
 
       // Add files if they exist
       if (photoProfile instanceof File) {
@@ -124,7 +133,7 @@ verifyDoctor: async (doctorId: string, status: 'APPROVED' | 'REJECTED') => {
         }
       });
 
-      const response = await api.put(`/admin/doctors/${data.id}`, formData, {
+      const response = await api.put(`/admin/doctors/${id}`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       return response.data;
@@ -194,7 +203,7 @@ verifyDoctor: async (doctorId: string, status: 'APPROVED' | 'REJECTED') => {
     }
   },
 
-  getDoctorSchedules: async (): Promise<any[]> => {
+  getDoctorSchedules: async (): Promise<DoctorSchedule[]> => {
     try {
       const { data } = await api.get('/admin/dashboard/doctor-schedules');
       return data;

@@ -197,8 +197,12 @@ export const pregnancyService = {
   updateReminderSettings: async (settings: ReminderSettings): Promise<UpdateResponse> => {
     try {
       const response = await api.put<UpdateResponse>('/pregnancy/reminder/settings', settings);
+      if (!response.data) {
+        throw new Error('No response data received');
+      }
       return response.data;
     } catch (error) {
+      console.error('Update reminder settings error:', error);
       if (error instanceof AxiosError && error.response?.data) {
         throw new Error(error.response.data.message);
       }
