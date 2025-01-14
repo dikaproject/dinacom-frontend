@@ -19,21 +19,23 @@ const Diagnosa = () => {
   const [answeredCount, setAnsweredCount] = useState(0);
   const [complaint, setComplaint] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const apiKey = 'inth_premium_IDGUGGbdbdkjkwDWoiwodhhnni3eyi73bIbIDdg';
+  const apiKey = process.env.NEXT_PUBLIC_DIAGNOSA_API_KEY;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
+    const headers = {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey ?? ''
+    } as HeadersInit;
+
     try {
       if (Object.keys(currentAnswers).length === 0) {
         // First submission - get questions
-        const response = await fetch('http://localhost:8000/v1/health/diagnose', {
+        const response = await fetch(process.env.NEXT_PUBLIC_DIAGNOSA_API_URL!, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': apiKey
-          },
+          headers,
           body: JSON.stringify({ complaint })
         });
 
@@ -44,12 +46,9 @@ const Diagnosa = () => {
         }
       } else {
         // Second submission - get diagnosis
-        const response = await fetch('http://localhost:8000/v1/health/diagnose', {
+        const response = await fetch(process.env.NEXT_PUBLIC_DIAGNOSA_API_URL!, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': apiKey
-          },
+          headers,
           body: JSON.stringify({
             complaint,
             answers: currentAnswers
