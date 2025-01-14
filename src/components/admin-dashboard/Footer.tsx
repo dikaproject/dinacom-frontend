@@ -54,7 +54,7 @@ const Footer = () => {
           
           <div className="mt-8 border-t border-gray-200 pt-6 text-center">
             <p className="text-sm text-gray-600">
-              © 2024 MomCare. All rights reserved.
+              © 2024 PregnaCare. All rights reserved.
             </p>
           </div>
         </div>

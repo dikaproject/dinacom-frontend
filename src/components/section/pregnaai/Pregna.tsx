@@ -18,7 +18,7 @@ const PregnaAI = () => {
   const [newMessage, setNewMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [apiKey] = useState('inth_bediuekuefBKUSDWtbDWigU886DSBjkkbh'); // Demo key
+  const [apiKey] = useState(process.env.NEXT_PUBLIC_PREGNAAI_API_KEY); // Updated
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const [useWebSearch, setUseWebSearch] = useState(false);
 
@@ -55,19 +55,45 @@ const PregnaAI = () => {
     });
   };
 
-  // Add typing animation helper
+  // Replace the old typeMessage function with this improved version
   const typeMessage = (text: string, callback: (typedText: string) => void) => {
     let index = 0;
-    const speed = 20; // Typing speed in milliseconds
+    
+    const getTypingDelay = () => {
+      // Faster base typing speed
+      const baseDelay = 20; // Reduced from 30
+      const punctuationDelay = 100; // Reduced from 150
+      const shortPause = 30; // Reduced from 50
+      
+      const char = text[index];
+      const nextChar = text[index + 1];
+      
+      // Adjust chunk size and speed for longer texts
+      const lengthFactor = Math.max(0.3, 1 - (text.length / 800)); // More aggressive scaling for long texts
+      
+      if (/[.!?]/.test(char)) return punctuationDelay;
+      if (/[,;:]/.test(char)) return punctuationDelay / 2;
+      if (char === ' ' && /[A-Z]/.test(nextChar || '')) return shortPause;
+      
+      // Smaller random variation
+      const variation = Math.random() * 10 - 5; // Reduced from 20-10
+      
+      return baseDelay * lengthFactor + variation;
+    };
 
     const type = () => {
       if (index < text.length) {
-        callback(text.slice(0, index + 1));
-        index++;
-        setTimeout(type, speed);
+        // Increased chunk size for better performance
+        const chunkSize = text.length > 300 ? 4 : 2; // Increased chunk sizes
+        const chunk = text.slice(index, index + chunkSize);
+        callback(text.slice(0, index + chunk.length));
+        index += chunk.length;
+        
+        setTimeout(type, getTypingDelay());
       }
     };
-    type();
+
+    setTimeout(type, 100); // Reduced initial delay from 200
   };
 
   // Modify handleSend to include typing animation and sources
@@ -86,13 +112,15 @@ const PregnaAI = () => {
     setNewMessage('');
     setIsTyping(true);
 
+    const headers = {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey ?? ''
+    } as HeadersInit;
+
     try {
-      const response = await fetch('http://localhost:8000/v1/health/chat', {
+      const response = await fetch(process.env.NEXT_PUBLIC_PREGNAAI_API_URL!, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey
-        },
+        headers,
         body: JSON.stringify({
           question: newMessage,
           version: 'ITHAI-1.0', // Using demo version
@@ -118,7 +146,7 @@ const PregnaAI = () => {
 
       setMessages(prev => [...prev, tempBotMessage]);
 
-      // Animate the typing
+      // Enhanced typing animation
       typeMessage(data.answer, (typedText) => {
         setMessages(prev => prev.map(msg =>
           msg.id === tempBotMessage.id
@@ -288,3 +316,4 @@ const PregnaAI = () => {
 };
 
 export default PregnaAI;
+

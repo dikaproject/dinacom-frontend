@@ -7,15 +7,14 @@ import {
   Bell,
   Clock,
   MessageCircle,
-  ToggleRight,
-  ToggleLeft,
   Calendar,
   CheckCircle2,
   XCircle,
 } from "lucide-react";
 import DashboardSkeleton from "@/components/loading/DashboardSkeleton";
 import type { PregnancyProfile } from "@/types/pregnancy";
-
+import { Switch } from '@/components/ui/switch';
+import toast from "react-hot-toast";
 interface ExtendedProfile extends PregnancyProfile {
   isWhatsappActive: boolean;
   reminderTime: string;
@@ -29,30 +28,32 @@ export default function RemindersPage() {
 
   const [isSaving, setIsSaving] = useState(false);
 
-  const fetchProfile = async () => {
+    const fetchProfile = async () => {
     try {
-      const data = await pregnancyService.getProfile();
-      if (!data) throw new Error('No data received');
-
-      const wibTime = data.reminderTime 
-        ? new Date(data.reminderTime).toLocaleTimeString('en-US', {
+      const response = await pregnancyService.getProfile();
+      console.log('Profile data:', response); // Debug log
+  
+      if (!response || !response.profile) {
+        throw new Error('Invalid profile data');
+      }
+  
+      // Convert UTC to WIB
+      const reminderTimeWIB = response.profile.reminderTime 
+        ? new Date(response.profile.reminderTime).toLocaleTimeString('en-US', {
             timeZone: 'Asia/Jakarta',
             hour: '2-digit',
             minute: '2-digit',
             hour12: false
           })
         : "08:00";
-
-      setProfile({
-        ...data,
-        isWhatsappActive: data.isWhatsappActive ?? false,
-        reminderTime: data.reminderTime || new Date().toISOString()
-      } as unknown as ExtendedProfile);
-      
-      setReminderTime(wibTime);
-      setIsWhatsappActive(data.isWhatsappActive ?? false);
+  
+      setProfile(response.profile as ExtendedProfile);
+      setReminderTime(reminderTimeWIB);
+      setIsWhatsappActive(response.profile.isWhatsappActive ?? false);
+  
     } catch (error) {
       console.error("Failed to fetch profile:", error);
+      toast.error('Failed to load reminder settings');
     } finally {
       setLoading(false);
     }
@@ -61,25 +62,24 @@ export default function RemindersPage() {
   useEffect(() => {
     fetchProfile();
   }, []);
-
   const handleUpdateSettings = async () => {
     setIsSaving(true);
     try {
+      // Convert time to correct format
       const [hours, minutes] = reminderTime.split(":");
       const date = new Date();
-      // Convert WIB time to UTC for storage
-      const jakartaOffset = 7; // UTC+7
-      date.setUTCHours(parseInt(hours) - jakartaOffset, parseInt(minutes), 0, 0);
+      date.setHours(parseInt(hours), parseInt(minutes), 0, 0);
 
-      const response = await pregnancyService.updateReminderSettings({
+      await pregnancyService.updateReminderSettings({
         isWhatsappActive,
         reminderTime: date.toISOString(),
       });
 
-      if (!response) throw new Error('Update failed');
-      await fetchProfile();
+      await fetchProfile(); // Refresh data after update
+      toast.success('Settings updated successfully');
     } catch (error) {
       console.error("Failed to update settings:", error);
+      toast.error('Failed to update settings');
     } finally {
       setIsSaving(false);
     }
@@ -133,23 +133,21 @@ export default function RemindersPage() {
             </div>
 
             {/* WhatsApp Toggle */}
-            <div>
-              <label className="flex items-center justify-between cursor-pointer">
-                <span className="text-sm font-medium text-gray-700">
-                  WhatsApp Notifications
-                </span>
-                <button
-                  onClick={() => setIsWhatsappActive(!isWhatsappActive)}
-                  className="relative"
-                >
-                  {isWhatsappActive ? (
-                    <ToggleRight className="w-10 h-10 text-purple-600" />
-                  ) : (
-                    <ToggleLeft className="w-10 h-10 text-gray-400" />
-                  )}
-                </button>
-              </label>
-            </div>
+            <div className="flex items-center justify-between space-x-4 py-4">
+    <div className="space-y-1">
+      <h4 className="text-sm font-medium text-gray-900">
+        WhatsApp Notifications
+      </h4>
+      <p className="text-sm text-gray-500">
+        Receive daily reminders via WhatsApp
+      </p>
+    </div>
+    <Switch
+      checked={isWhatsappActive}
+      onCheckedChange={setIsWhatsappActive}
+      className="data-[state=checked]:bg-purple-600"
+    />
+  </div>
 
             {/* Save Button */}
             <motion.button

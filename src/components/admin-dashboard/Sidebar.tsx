@@ -11,16 +11,24 @@ import {
   Stethoscope,
   FolderPlus,
   PackagePlus,
-  Settings,
   ChevronLeft,
   ChevronRight,
   FileText, // For articles
-  BookOpen, // For article categories
+  BookOpen,
+  LogOut, // For article categories
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 const Sidebar = () => {
+  const router = useRouter();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const pathname = usePathname();
+
+  const handleLogout = async () => {
+    localStorage.removeItem('token');
+    router.push('/login');
+    window.location.reload();
+  };
 
   const menuItems = [
     { 
@@ -106,13 +114,13 @@ const Sidebar = () => {
       </nav>
 
       <div className="p-4 border-t">
-        <Link
-          href="/dashboard/settings"
-          className="flex items-center space-x-2 p-3 rounded-lg hover:bg-purple-50"
+      <button
+          onClick={handleLogout}
+          className="w-full flex items-center space-x-2 p-3 rounded-lg hover:bg-red-50 text-red-600 transition-colors"
         >
-          <Settings size={20} />
-          {!isCollapsed && <span>Settings</span>}
-        </Link>
+          <LogOut size={20} />
+          {!isCollapsed && <span>Logout</span>}
+        </button>
       </div>
     </motion.div>
   );

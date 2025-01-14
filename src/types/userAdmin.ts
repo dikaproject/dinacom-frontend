@@ -17,4 +17,5 @@ export interface UserAdminFormData {
   password: string;
   confirmPassword: string;
   role: UserRole;
+  currentPassword?: string;
 }
