@@ -1,5 +1,5 @@
 import api from './api';
-import { User, LoginCredentials, RegisterCredentials, DoctorRegistration } from '@/types/auth';
+import { User, LoginCredentials, RegisterCredentials } from '@/types/auth';
 import { AxiosError } from 'axios';
 
 interface AuthResponse {
@@ -62,32 +62,27 @@ export const authService = {
     }
   },
 
-  registerDoctor: async (doctorData: FormData): Promise<AuthResponse> => {
+   registerDoctor: async (doctorData: FormData): Promise<AuthResponse> => {
     try {
-      // Add validation for required files
-      const photoProfile = doctorData.get('photoProfile');
-      const documentsProof = doctorData.get('documentsProof');
-
-      if (!photoProfile) {
-        throw new Error('Profile photo is required');
+      // Log FormData contents
+      console.log('FormData contents:');
+      for (const [key, value] of doctorData.entries()) {
+        console.log(`${key}: ${value}`);
       }
-
-      if (!documentsProof) {
-        throw new Error('Documentation proof is required');
-      }
-
+  
       const response = await api.post('/auth/register-doctor', doctorData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
-
-      if (!response.data.token || !response.data.user) {
-        throw new Error('Invalid response from server');
+  
+      if (!response.data) {
+        throw new Error('No response received from server');
       }
-
+  
       return response.data;
     } catch (error) {
+      console.error('Register doctor error:', error);
       if (error instanceof AxiosError) {
         const errorMessage = error.response?.data?.message 
           || error.response?.data?.error 
