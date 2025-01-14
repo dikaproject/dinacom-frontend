@@ -15,59 +15,41 @@ class ChatService {
 
   async connect() {
     if (this.socket?.connected) return true;
-    if (this.isConnecting) return this.connectionPromise;
 
-    this.isConnecting = true;
-    this.connectionPromise = new Promise((resolve, reject) => {
-      try {
-        const socketUrl = process.env.NODE_ENV === 'production' 
-          ? 'https://dinacom.intechofficial.com'
-          : 'http://localhost:5000';
+    const socketUrl = process.env.NODE_ENV === 'production' 
+      ? 'https://dinacom.intechofficial.com'
+      : 'http://localhost:5000';
 
-        this.socket = io(socketUrl, {
-          path: '/socket.io',
-          transports: ['polling', 'websocket'], // Start with polling first
-          secure: process.env.NODE_ENV === 'production',
-          rejectUnauthorized: false,
-          reconnection: true,
-          reconnectionAttempts: 5,
-          reconnectionDelay: 1000,
-          timeout: 20000,
-          forceNew: true,
-          withCredentials: true
-        });
-
-        // Connection timeout
-        const timeout = setTimeout(() => {
-          if (!this.socket?.connected) {
-            this.socket?.disconnect();
-            this.isConnecting = false;
-            reject(new Error('Connection timeout'));
-          }
-        }, 20000);
-
-        this.socket.on('connect', () => {
-          clearTimeout(timeout);
-          console.log('Socket connected:', this.socket?.id);
-          this.isConnecting = false;
-          this.setupSocketListeners();
-          resolve(true);
-        });
-
-        this.socket.on('connect_error', (error) => {
-          clearTimeout(timeout);
-          console.error('Socket connect error:', error);
-          this.isConnecting = false;
-          reject(error);
-        });
-
-      } catch (error) {
-        this.isConnecting = false;
-        reject(error);
+    this.socket = io(socketUrl, {
+      path: '/socket.io/',
+      transports: ['websocket', 'polling'],
+      secure: true,
+      rejectUnauthorized: false,
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+      timeout: 20000,
+      auth: {
+        token: localStorage.getItem('token')
+      },
+      extraHeaders: {
+        'Access-Control-Allow-Origin': '*'
       }
     });
 
-    return this.connectionPromise;
+    return new Promise((resolve, reject) => {
+      if (!this.socket) return reject('Socket not initialized');
+
+      this.socket.on('connect', () => {
+        console.log('Connected to WebSocket server');
+        resolve(true);
+      });
+
+      this.socket.on('connect_error', (error) => {
+        console.error('Connection error:', error);
+        reject(error);
+      });
+    });
   }
 
   private setupSocketListeners() {
