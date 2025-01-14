@@ -36,7 +36,7 @@ class ChatService {
 
         this.connectionAttempts++;
         
-        this.socket = io(process.env.NEXT_PUBLIC_API_SOCKET || 'http://localhost:5000', {
+        this.socket = io(process.env.NEXT_PUBLIC_API_SOCKET, {
           withCredentials: true,
           reconnection: true,
           reconnectionAttempts: 5,
