@@ -190,13 +190,13 @@ const Cart: React.FC<CartProps> = ({ cartItems, loading }) => {
                     >
                       {/* Product Image */}
                       <div className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-lg">
-                        <Image
-                          src={item.product.thumbnail || "/placeholder.png"}
-                          alt={item.product.title}
-                          width={96}
-                          height={96}
-                          className="h-full w-full object-cover"
-                        />
+                      <Image
+  src={`${process.env.NEXT_PUBLIC_API_URL}/uploads/product/${item.product.thumbnail}` || "/placeholder.png"}
+  alt={item.product.title}
+  width={96}
+  height={96}
+  className="h-full w-full object-cover"
+/>
                       </div>
 
                       {/* Product Details */}

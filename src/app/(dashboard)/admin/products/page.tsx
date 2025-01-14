@@ -99,13 +99,13 @@ const ProductsList = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="h-10 w-10 flex-shrink-0">
-                          <img
-                            src={product.thumbnail}
-                            alt={product.title}
-                            width={40}
-                            height={40}
-                            className="rounded-lg object-cover"
-                          />
+                        <img
+  src={`${process.env.NEXT_PUBLIC_API_URL}/uploads/product/${product.thumbnail}`}
+  alt={product.title}
+  width={40}
+  height={40}
+  className="rounded-lg object-cover"
+/>
                         </div>
                         <div className="ml-4">
                           <div className="text-sm font-medium text-gray-900">{product.title}</div>
