@@ -1,36 +1,152 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# PregnaCare - Your Trusted Partner for a Healthy Pregnancy 👩‍🍼
 
-## Getting Started
+## Overview
+PregnaCare is a website application designed to support and empower pregnant women throughout their journey to motherhood. The app offers comprehensive health monitoring tools, personalized tips, and reminders to ensure a healthy pregnancy.
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Table of Contents
+- [Account](#account)
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Installation](#installation)
+- [Database Schema](#database-schema)
+- [API Documentation](#api-documentation)
+  - [Authentication](#authentication)
+  - [Consultation](#consultation)
+  - [Analyze Ai](#analyze-ai)
+- [Contributors](#contributors)
+- [License](#license)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Account
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Link Demo Website : https://wasteless.intechsosmed.my.id
 
-## Learn More
+---
+- email : admin@gmail.com (Demo Admin)
+- passsword : password123
+---
+- email : dika@gmail.com (Demo Doctor)
+- password : Dika#3321
+---
+- email : dika@gmail.com (Demo Doctor)
+- password : password
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Features
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### For Mothers-to-Be 👩‍🍼
+- Track health metrics such as weight, blood pressure, and symptoms.
+- View detailed pregnancy calendar and reminders.
+- Consultation with doctors for real-time support.
+- Dashboard Analytics
 
-## Deploy on Vercel
+### For Doctors 🩺
+- Manage patient consultations and schedules.
+- Manage availability and consultation fees.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### For Admin 👨‍💼
+- Doctor approval system
+- Monitor and moderate content in the app, such as product and resources.
+- Generate reports for operational and performance insights.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## Tech Stack
+
+### Frontend 🎨
+- **Next.js 15 (App Router)**
+- **TypeScript**
+- **Tailwind CSS**
+- **Framer Motion**
+- **React Hook Form**
+- **React Hot Toast**
+
+### Backend 💾
+- **Node.js**
+- **Express.js**
+- **Prisma**
+- **MySQL**
+- **JSON Web Token**
+- **Multer**
+- **Fonnte**
+
+---
+
+## Features 🚀
+- **Authentication & Authorization**
+- **File Upload**
+- **Whatsapp Notifications**
+- **Real-time Ai Chat**
+- **Responsive Design**
+- **API Integration**
+- **Location-based Services**
+
+---
+
+## Installation
+1. Clone this repository:
+   ```bash
+   git clone https://github.com/your-username/dinacom-frontend.git
+   ```
+2. Navigate to the project directory:
+   ```bash
+   cd dinacom-frontend
+   ```
+3. Install dependencies for the frontend and backend:
+   ```bash
+   cd dinacom-frontend && npm install
+   cd ../dinacom-backend && npm install
+   ```
+4. Create a .env.local file in the project root with the following variables:
+   ```bash
+    DATABASE_URL="mysql://user:password@localhost:3306/lomba_dinacom"
+    JWT_SECRET="your sceret key"
+    MIDTRANS_SERVER_KEY=your_server_key
+    MIDTRANS_CLIENT_KEY=your_client_key
+    OPENAI_API_KEY=your_openai_key
+    FONNTE_TOKEN=your_fonnte_token
+   ```
+
+6. Run the development server:
+   ```bash
+   cd dinacom-frontend && npm run dev
+   cd ../dinacom-backend && npm start
+   ```
+
+---
+
+## Database Schema
+To be added.
+
+---
+
+## API Documentation
+
+### Authentication
+Details for login, signup, and token management.
+
+### Consultation
+APIs for managing Consultation, including payment, chatting.
+
+### Analyze Ai
+APIs for managing Consultation, including payment, chatting.
+
+---
+
+## Contributors
+- [Arya Fathdhillah Adi Saputra](https://github.com/afasarya)
+- [Rasya Dika Pratama](https://github.com/dikaproject)
+- [Sofwan Nuha Al Faruq](https://github.com/theonlyshannon)
+
+---
+
+## License
+- This project is licensed under the [MIT License](LICENSE).
+- API Wilayah Indonesia [API](https://github.com/emsifa/api-wilayah-indonesia.git)
+---
+
+Made with 💚 for a Healthy Pregnancy.
