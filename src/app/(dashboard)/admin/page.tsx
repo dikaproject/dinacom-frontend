@@ -8,14 +8,25 @@ import {
 import PageWrapper from '@/components/PageWrapper';
 import { adminService } from '@/services/admin';
 
+
 const AdminDashboard = () => {
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<{
+    totalDoctors: number;
+    totalUsers: number;
+    totalRevenue: number;
+    totalProducts: number;
+    doctorsGrowth: number;
+    usersGrowth: number;
+    revenueGrowth: number;
+    productsGrowth: number;
+  } | null>(null);
   const [orders, setOrders] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [schedules, setSchedules] = useState<any[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState('date');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -69,33 +80,33 @@ const AdminDashboard = () => {
   const statsCards = [
     {
       title: 'Total Doctors',
-      value: stats?.totalDoctors || '0',
-      change: `${stats?.doctorsGrowth.toFixed(1)}%`,
-      isPositive: stats?.doctorsGrowth > 0,
+      value: stats?.totalDoctors ?? '0',
+      change: stats?.doctorsGrowth ? `${stats.doctorsGrowth.toFixed(1)}%` : '0%',
+      isPositive: (stats?.doctorsGrowth ?? 0) > 0,
       icon: <FiUsers className="w-6 h-6" />,
       color: 'bg-blue-500'
     },
     {
       title: 'Total Users',
-      value: stats?.totalUsers || '0',
-      change: `${stats?.usersGrowth.toFixed(1)}%`,
-      isPositive: stats?.usersGrowth > 0,
+      value: stats?.totalUsers ?? '0',
+      change: stats?.usersGrowth ? `${stats.usersGrowth.toFixed(1)}%` : '0%',
+      isPositive: (stats?.usersGrowth ?? 0) > 0,
       icon: <FiUserPlus className="w-6 h-6" />,
       color: 'bg-purple-500'
     },
     {
       title: 'Total Revenue',
-      value: `Rp ${formatCurrency(stats?.totalRevenue || 0)}`,
-      change: `${stats?.revenueGrowth.toFixed(1)}%`,
-      isPositive: stats?.revenueGrowth > 0,
+      value: `Rp ${formatCurrency(stats?.totalRevenue ?? 0)}`,
+      change: stats?.revenueGrowth ? `${stats.revenueGrowth.toFixed(1)}%` : '0%',
+      isPositive: (stats?.revenueGrowth ?? 0) > 0,
       icon: <FiDollarSign className="w-6 h-6" />,
       color: 'bg-green-500'
     },
     {
       title: 'Total Products',
-      value: stats?.totalProducts || '0',
-      change: `${stats?.productsGrowth.toFixed(1)}%`,
-      isPositive: stats?.productsGrowth > 0,
+      value: stats?.totalProducts ?? '0',
+      change: stats?.productsGrowth ? `${stats.productsGrowth.toFixed(1)}%` : '0%',
+      isPositive: (stats?.productsGrowth ?? 0) > 0,
       icon: <FiShoppingBag className="w-6 h-6" />,
       color: 'bg-orange-500'
     }
