@@ -279,7 +279,7 @@ const EditPatient = ({ params }: { params: Promise<{ id: string }> }) => {
                         ...formData,
                         profile: { ...formData.profile, bloodType: e.target.value }
                       })}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-400"
+                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-400 text-gray-700"
                     >
                       <option value="">Select Blood Type</option>
                       <option value="A">A</option>
@@ -323,7 +323,7 @@ const EditPatient = ({ params }: { params: Promise<{ id: string }> }) => {
                 {/* Action Buttons */}
                 <div className="flex justify-end space-x-4 pt-6">
                   <Link
-                    href="/admin/patients"
+                    href="/admin/users"
                     className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
                   >
                     Cancel

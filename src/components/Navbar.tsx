@@ -38,9 +38,8 @@ const Navbar = () => {
 
   const navItems = [
     { title: 'Home', href: '/' },
-    { title: 'Diagnosa', href: '/diagnosa' },
-    { title: 'Konsultasi', href: '/konsultasi' },
-    { title: 'Community', href: '/community' },
+    { title: 'Diagnose', href: '/diagnosa' },
+    { title: 'Consultation', href: '/konsultasi' },
     { title: 'PregnaAi', href: '/pregna' },
     { title: 'PregnaShop', href: '/pregnashop' },
 
@@ -135,7 +134,7 @@ const Navbar = () => {
                     >
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                     </svg>
-                    <span>Dashboard</span>
+                    <span className="text-white">Dashboard</span>
                   </motion.button>
                 </Link>
                 <motion.button

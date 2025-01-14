@@ -184,7 +184,7 @@ const Analytics = () => {
                 <select
                   value={timeRange}
                   onChange={(e) => setTimeRange(e.target.value)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 text-gray-700"
                 >
                   <option value="week">Last Week</option>
                   <option value="month">Last Month</option>
@@ -208,8 +208,8 @@ const Analytics = () => {
                   animate={{ opacity: 1, y: 0 }}
                   className="bg-white p-6 rounded-xl shadow-sm"
                 >
-                  <h3 className="text-gray-500 text-sm">Total Users</h3>
-                  <p className="text-2xl font-semibold">{analyticsData.overview.totalUsers}</p>
+                  <h3 className="text-gray-600 text-sm">Total Users</h3>
+                  <p className="text-2xl font-semibold text-gray-700">{analyticsData.overview.totalUsers}</p>
                 </motion.div>
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
@@ -217,8 +217,8 @@ const Analytics = () => {
                   transition={{ delay: 0.1 }}
                   className="bg-white p-6 rounded-xl shadow-sm"
                 >
-                  <h3 className="text-gray-500 text-sm">Total Doctors</h3>
-                  <p className="text-2xl font-semibold">{analyticsData.overview.totalDoctors}</p>
+                  <h3 className="text-gray-600 text-sm">Total Doctors</h3>
+                  <p className="text-2xl font-semibold text-gray-700">{analyticsData.overview.totalDoctors}</p>
                 </motion.div>
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
@@ -226,8 +226,8 @@ const Analytics = () => {
                   transition={{ delay: 0.2 }}
                   className="bg-white p-6 rounded-xl shadow-sm"
                 >
-                  <h3 className="text-gray-500 text-sm">Total Revenue</h3>
-                  <p className="text-2xl font-semibold">{formatCurrency(analyticsData.overview.totalRevenue)}</p>
+                  <h3 className="text-gray-600 text-sm">Total Revenue</h3>
+                  <p className="text-2xl font-semibold text-gray-700">{formatCurrency(analyticsData.overview.totalRevenue)}</p>
                 </motion.div>
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
@@ -235,8 +235,8 @@ const Analytics = () => {
                   transition={{ delay: 0.3 }}
                   className="bg-white p-6 rounded-xl shadow-sm"
                 >
-                  <h3 className="text-gray-500 text-sm">Products Sold</h3>
-                  <p className="text-2xl font-semibold">{analyticsData.overview.totalProductsSold}</p>
+                  <h3 className="text-gray-600 text-sm">Products Sold</h3>
+                  <p className="text-2xl font-semibold text-gray-700">{analyticsData.overview.totalProductsSold}</p>
                 </motion.div>
               </>
             )}
