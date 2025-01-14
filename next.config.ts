@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
-    domains: ['localhost', 'via.placeholder.com', 'pregnacare.intechofficial.com', 'intechofficial.com']
+    domains: ['localhost', 'via.placeholder.com', 'pregnacare.intechofficial.com', 'intechofficial.com', 'dinacom.intechofficial.com']
   },
   eslint: {
     ignoreDuringBuilds: true,
