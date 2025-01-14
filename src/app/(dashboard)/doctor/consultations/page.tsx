@@ -400,7 +400,7 @@ const DoctorConsultationPage = () => {
                   <div className="flex items-center gap-2">
                     <FiUser className="text-gray-400" />
                     <div>
-                      <p className="font-medium">
+                      <p className="font-medium text-gray-700">
                         {consultation.user?.profile?.fullName}
                       </p>
                       <p className="text-sm text-gray-500">Patient</p>
@@ -488,7 +488,7 @@ const DoctorConsultationPage = () => {
                 {/* Modal header - make it sticky */}
                 <div className="p-6 border-b sticky top-0 bg-white rounded-t-2xl z-10">
                   <div className="flex justify-between items-start">
-                    <h3 className="text-xl font-semibold">
+                    <h3 className="text-xl font-semibold text-gray-700">
                       Consultation Details
                     </h3>
                     <button
@@ -543,7 +543,7 @@ const DoctorConsultationPage = () => {
 
                     {/* Patient Information */}
                     <div className="space-y-2">
-                      <h4 className="font-medium">Patient Information</h4>
+                      <h4 className="font-medium text-gray-700">Patient Information</h4>
                       <div className="bg-gray-50 rounded-xl p-4 space-y-2">
                         <p className="flex items-center gap-2">
                           <FiUser className="text-gray-400" />
@@ -566,13 +566,13 @@ const DoctorConsultationPage = () => {
 
                     {/* Medical Information */}
                     <div className="space-y-2">
-                      <h4 className="font-medium">Medical Information</h4>
+                      <h4 className="font-medium text-gray-700">Medical Information</h4>
                       <div className="bg-gray-50 rounded-xl p-4 space-y-4">
                         <div>
                           <p className="text-sm text-gray-600">
                             Pregnancy Week
                           </p>
-                          <p className="font-medium">
+                          <p className="font-medium text-gray-700">
                             {selectedConsultation.pregnancyWeek} weeks
                           </p>
                         </div>
@@ -580,14 +580,14 @@ const DoctorConsultationPage = () => {
                           <p className="text-sm text-gray-600">
                             Previous Pregnancies
                           </p>
-                          <p className="font-medium">
+                          <p className="font-medium text-gray-700">
                             {selectedConsultation.previousPregnancies}
                           </p>
                         </div>
                         {selectedConsultation.symptoms && (
                           <div>
                             <p className="text-sm text-gray-600">Symptoms</p>
-                            <p className="font-medium">
+                            <p className="font-medium text-gray-700">
                               {selectedConsultation.symptoms}
                             </p>
                           </div>
@@ -605,7 +605,7 @@ const DoctorConsultationPage = () => {
 
                     {/* Payment Information */}
                     <div className="space-y-2">
-                      <h4 className="font-medium">Payment Information</h4>
+                      <h4 className="font-medium text-gray-700">Payment Information</h4>
                       {renderPaymentInfo()}
                     </div>
 

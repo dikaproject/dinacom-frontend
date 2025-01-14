@@ -107,7 +107,7 @@ export default function RemindersPage() {
 
         {/* Settings Card */}
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-          <h2 className="text-lg font-semibold mb-4 flex items-center">
+          <h2 className="text-lg font-semibold mb-4 flex items-center text-gray-700">
             <Bell className="w-5 h-5 mr-2 text-purple-600" />
             Reminder Settings
           </h2>
@@ -173,7 +173,7 @@ export default function RemindersPage() {
 
         {/* Reminder Status */}
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-          <h2 className="text-lg font-semibold mb-4 flex items-center">
+          <h2 className="text-lg font-semibold mb-4 flex items-center text-gray-700">
             <Calendar className="w-5 h-5 mr-2 text-purple-600" />
             Next Reminders
           </h2>
@@ -206,7 +206,7 @@ export default function RemindersPage() {
 
         {/* Message History */}
         <div className="bg-white rounded-2xl shadow-lg p-6">
-          <h2 className="text-lg font-semibold mb-4 flex items-center">
+          <h2 className="text-lg font-semibold mb-4 flex items-center text-gray-700">
             <MessageCircle className="w-5 h-5 mr-2 text-purple-600" />
             Recent Reminders
           </h2>

@@ -262,19 +262,19 @@ const analyzeFoodWithAI = async () => {
   </label>
   <input
     type="text"
-    value={formData.foodItems?.join(", ")} // Change to comma
+    value={formData.foodItems?.join(", ")}
     onChange={(e) => setFormData({
       ...formData,
       foodItems: e.target.value
-        .split(",") // Split by comma
+        .split(/,(?=\s|$)/) // Split by comma followed by space or end of string
         .map(item => item.trim())
-        .filter(item => item !== "") // Remove empty items
+        .filter(Boolean) // Remove empty strings
     })}
     className="mt-1 w-full px-4 py-3 rounded-lg border border-purple-100 focus:outline-none focus:ring-2 focus:ring-purple-400"
-    placeholder="e.g., 2 Telur Dadar, 200g nasi uduk, Sayur Kangkung"
+    placeholder="e.g., 2 Telur Dadar, Nasi Putih 300g, Sayur Kangkung"
   />
   <p className="mt-1 text-sm text-gray-500">
-    Separate items with commas
+    Separate items with commas (e.g., 2 Telur Dadar, Nasi Putih 300g)
   </p>
   <motion.button
     type="button"

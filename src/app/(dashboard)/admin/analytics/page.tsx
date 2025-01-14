@@ -191,10 +191,6 @@ const Analytics = () => {
                   <option value="quarter">Last Quarter</option>
                   <option value="year">Last Year</option>
                 </select>
-                <button className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
-                  <FiDownload className="mr-2" />
-                  Download Report
-                </button>
               </div>
             </div>
           </div>

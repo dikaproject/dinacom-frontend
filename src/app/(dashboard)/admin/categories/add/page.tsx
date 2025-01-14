@@ -16,6 +16,21 @@ const AddCategory = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const generateSlug = (name: string) => {
+    return name
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/[\s_-]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  };
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const name = e.target.value;
+    const slug = generateSlug(name);
+    setFormData({ ...formData, name, slug });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -57,32 +72,34 @@ const AddCategory = () => {
                   </div>
                 )}
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Category Name
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-900"
-                    required
-                  />
-                </div>
+<div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Category Name
+          </label>
+          <input
+            type="text"
+            value={formData.name}
+            onChange={handleNameChange}
+            className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-900"
+            required
+          />
+        </div>
 
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Category Slug
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.slug}
-                    onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-900"
-                    required
-                  />
-                </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Slug
+          </label>
+          <input
+            type="text"
+            value={formData.slug}
+            className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent text-gray-900 bg-gray-50"
+            required
+            readOnly
+          />
+          <p className="mt-1 text-sm text-gray-500">
+            Auto-generated from category name
+          </p>
+        </div>
 
                 <div className="flex justify-end space-x-4 pt-6">
                   <Link

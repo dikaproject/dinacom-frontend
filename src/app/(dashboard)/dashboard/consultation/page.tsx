@@ -290,7 +290,7 @@ const ConsultationPage = () => {
             >
               <div className="space-y-4 sm:space-y-6">
                 <div className="flex justify-between items-start">
-                  <h3 className="text-base sm:text-lg font-medium">Consultation Details</h3>
+                  <h3 className="text-base sm:text-lg font-medium text-gray-700">Consultation Details</h3>
                   <button
                     onClick={() => setSelectedConsultation(null)}
                     className="text-gray-400 hover:text-gray-600 p-2"
@@ -352,7 +352,7 @@ const ConsultationPage = () => {
                       <div className="border-t pt-3">
                         <h4 className="text-sm font-medium text-gray-600 mb-2">Location</h4>
                         <div className="space-y-2">
-                          <p className="font-medium">{selectedConsultation.doctor.layananKesehatan.name}</p>
+                          <p className="font-medium text-gray-700">{selectedConsultation.doctor.layananKesehatan.name}</p>
                           <p className="text-sm text-gray-600">{selectedConsultation.doctor.layananKesehatan.address}</p>
                           <a 
                             href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(

@@ -2,8 +2,10 @@
 "use client"
 import { motion } from 'framer-motion';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 const HomeHero = () => {
+  const router = useRouter();
   const fadeIn = {
     initial: { opacity: 0, y: 20 },
     animate: { opacity: 1, y: 0 },
@@ -52,21 +54,23 @@ const HomeHero = () => {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="px-8 py-4 bg-gradient-to-r from-purple-600 to-purple-500 text-white rounded-full font-medium shadow-lg hover:shadow-xl transition-all"
-              >
-                Start Your Journey
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="px-8 py-4 bg-white text-purple-600 rounded-full font-medium shadow-md hover:shadow-lg transition-all border border-purple-100"
-              >
-                Learn More
-              </motion.button>
-            </div>
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          className="px-8 py-4 bg-gradient-to-r from-purple-600 to-purple-500 text-white rounded-full font-medium shadow-lg hover:shadow-xl transition-all"
+          onClick={() => router.push('/register')}
+        >
+          Start Your Journey
+        </motion.button>
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          className="px-8 py-4 bg-white text-purple-600 rounded-full font-medium shadow-md hover:shadow-lg transition-all border border-purple-100"
+          onClick={() => router.push('/pregna')}
+        >
+          Learn More
+        </motion.button>
+      </div>
           </motion.div>
 
           {/* Hero Image */}

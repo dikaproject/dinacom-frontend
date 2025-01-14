@@ -57,15 +57,15 @@ const Footer = () => {
             <div className="space-y-4 text-gray-600">
               <p className="flex items-center space-x-3">
                 <span className="text-purple-500">📧</span>
-                <span>contact@pregnacare.com</span>
+                <span>intechofficialteam@gmail.com</span>
               </p>
               <p className="flex items-center space-x-3">
                 <span className="text-purple-500">📱</span>
-                <span>(021) 555-0123</span>
+                <span>+62 812-278408422</span>
               </p>
               <p className="flex items-center space-x-3">
                 <span className="text-purple-500">📍</span>
-                <span>Jl. Kesehatan No. 123, Jakarta</span>
+                <span>Purwokerto, Banyumas Indonesia</span>
               </p>
             </div>
           </motion.div>
