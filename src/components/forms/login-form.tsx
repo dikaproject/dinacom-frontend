@@ -192,7 +192,7 @@ const LoginForm = () => {
             <div className="absolute inset-0 bg-gradient-to-br from-purple-600/90 to-purple-500/90" />
             <div className="relative h-full">
               <Image
-                src="/images/pregnancy-care.jpg"
+                src="/login.jpg"
                 alt="Pregnancy Care"
                 layout="fill"
                 objectFit="cover"

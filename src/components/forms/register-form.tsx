@@ -323,7 +323,7 @@ const RegisterForm = () => {
             <div className="absolute inset-0 bg-gradient-to-br from-purple-600/90 to-purple-500/90" />
             <div className="relative h-full">
               <Image
-                src="/images/motherhood.jpg"
+                src="/login.jpg"
                 alt="Motherhood"
                 layout="fill"
                 objectFit="cover"
@@ -340,7 +340,7 @@ const RegisterForm = () => {
               transition={{ delay: 0.2 }}
             >
               <Image
-                src="/images/pregnant-icon.jpg"
+                src="/images/doctoricon.jpg"
                 alt="Pregnant"
                 width={50}
                 height={50}
@@ -355,7 +355,7 @@ const RegisterForm = () => {
               transition={{ delay: 0.4 }}
             >
               <Image
-                src="/images/family-icon.jpg"
+                src="/images/babyicon.jpg"
                 alt="Family"
                 width={50}
                 height={50}
