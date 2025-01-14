@@ -71,6 +71,16 @@ export const adminService = {
     }
   },
 
+  deleteDoctor: async (id: string) => {
+    try {
+      const { data } = await api.delete(`/admin/doctors/${id}`);
+      return data;
+    } catch (error) {
+      console.error('Error deleting doctor:', error);
+      throw error;
+    }
+  },
+
   createDoctor: async (data: CreateDoctorData) => {
   try {
     const formData = new FormData();

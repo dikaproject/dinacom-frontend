@@ -84,32 +84,42 @@ const DoctorRegisterForm = () => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
-
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
-      setIsLoading(false);
-      return;
-    }
-
+  
     try {
+      // Validate required fields
+      if (!formData.photoProfile) {
+        throw new Error('Profile photo is required');
+      }
+  
+      if (!formData.documentsProof) {
+        throw new Error('Documentation proof is required');
+      }
+  
+      if (formData.password !== formData.confirmPassword) {
+        throw new Error('Passwords do not match');
+      }
+  
       const formDataToSend = new FormData();
       
+      // Add all form fields
       Object.entries(formData).forEach(([key, value]) => {
         if (value !== null && key !== 'confirmPassword') {
-          if (value instanceof File) {
-            formDataToSend.append(key, value);
-          } else {
-            formDataToSend.append(key, value.toString());
-          }
+          formDataToSend.append(key, value);
         }
       });
-
-      await authService.registerDoctor(formDataToSend);
-      toast.success('Registration successful!');
-      router.push('/login');
+  
+      const response = await authService.registerDoctor(formDataToSend);
+      
+      if (response.token) {
+        toast.success('Registration successful!');
+        router.push('/login');
+      } else {
+        throw new Error('Invalid response from server');
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Registration failed');
-      toast.error('Registration failed');
+      const message = err instanceof Error ? err.message : 'Registration failed';
+      setError(message);
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }

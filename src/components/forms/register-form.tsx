@@ -269,25 +269,48 @@ const RegisterForm = () => {
               </form>
 
               <div className="space-y-4 pt-4">
-                <p className="text-center text-gray-600">
-                  Already have an account?{" "}
-                  <Link
-                    href="/login"
-                    className="text-purple-600 hover:text-purple-500 font-medium"
-                  >
-                    Sign In
-                  </Link>
-                </p>
+  <p className="text-center text-gray-600">
+    Already have an account?{" "}
+    <Link
+      href="/login"
+      className="text-purple-600 hover:text-purple-500 font-medium"
+    >
+      Sign In
+    </Link>
+  </p>
 
-                <div className="text-center">
-                  <Link
-                    href="/register-doctor"
-                    className="text-purple-600 hover:text-purple-500 font-medium"
-                  >
-                    Register as a Doctor
-                  </Link>
-                </div>
-              </div>
+  <div className="relative">
+    <div className="absolute inset-0 flex items-center">
+      <div className="w-full border-t border-gray-200"></div>
+    </div>
+    <div className="relative flex justify-center text-sm">
+      <span className="px-2 bg-white text-gray-500">Or</span>
+    </div>
+  </div>
+
+  <div className="text-center space-y-2">
+    <p className="text-sm text-gray-600">Are you a healthcare professional?</p>
+    <Link
+      href="/register/doctor"
+      className="inline-flex items-center justify-center px-6 py-3 border border-purple-600 text-purple-600 hover:bg-purple-50 rounded-lg font-medium transition-colors"
+    >
+      Register as a Doctor
+      <svg 
+        className="ml-2 w-4 h-4" 
+        fill="none" 
+        stroke="currentColor" 
+        viewBox="0 0 24 24"
+      >
+        <path 
+          strokeLinecap="round" 
+          strokeLinejoin="round" 
+          strokeWidth="2" 
+          d="M14 5l7 7m0 0l-7 7m7-7H3"
+        />
+      </svg>
+    </Link>
+  </div>
+</div>
             </div>
           </motion.div>
 

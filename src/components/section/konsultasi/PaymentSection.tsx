@@ -248,7 +248,7 @@ const [transactionDetails, setTransactionDetails] = useState<MidtransStatusProps
             }`}
           >
             <Image
-              src="/icons/qris.png"
+              src="/qris-icon.jpg"
               alt="QRIS"
               width={32}
               height={32}
@@ -292,17 +292,17 @@ const [transactionDetails, setTransactionDetails] = useState<MidtransStatusProps
             </div>
           )}
 
-          {selectedMethod === 'QRIS' && paymentDetails.qrisUrl && (
-            <div className="mb-4 flex justify-center">
-              <Image
-                src={`${process.env.NEXT_PUBLIC_API_URL}${paymentDetails.qrisUrl}`}
-                alt="QRIS Code"
-                width={200}
-                height={200}
-                className="rounded-lg"
-              />
-            </div>
-          )}
+{selectedMethod === 'QRIS' && (
+  <div className="mb-4 flex justify-center">
+    <Image
+      src={`${process.env.NEXT_PUBLIC_API_URL}/uploads/qris.jpeg`}
+      alt="QRIS Code"
+      width={200}
+      height={200}
+      className="rounded-lg"
+    />
+  </div>
+)}
 
           <ol className="space-y-2">
             {paymentDetails.guide.steps.map((step, index) => (

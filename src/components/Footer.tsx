@@ -20,7 +20,7 @@ const Footer = () => {
           <motion.div {...fadeIn} className="space-y-6">
             <div className="flex items-center">
               <Image
-                src="/images/logo.png"
+                src="/images/logo-pregnacare.png"
                 alt="PregnaCare"
                 width={100}
                 height={100}

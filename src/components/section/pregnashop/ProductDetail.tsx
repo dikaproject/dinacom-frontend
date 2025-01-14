@@ -96,10 +96,10 @@ const ProductDetail = () => {
                 className="relative h-96 rounded-lg overflow-hidden"
               >
                 <img
-                  src={`/uploads/product/${product.thumbnail}`}
-                  alt={product.title}
-                  className="w-full h-full object-cover"
-                />
+    src={`${process.env.NEXT_PUBLIC_API_URL}/uploads/product/${product.thumbnail}`}
+    alt={product.title}
+    className="w-full h-full object-cover"
+  />
               </motion.div>
             </div>
 

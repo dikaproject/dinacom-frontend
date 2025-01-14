@@ -120,11 +120,11 @@ const Shop = () => {
                   className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all"
                 >
                   <div className="relative h-48">
-                    <img
-                      src={`/uploads/product/${product.thumbnail}`}
-                      alt={product.title}
-                      className="w-full h-full object-cover"
-                    />
+                  <img
+    src={`${process.env.NEXT_PUBLIC_API_URL}/uploads/product/${product.thumbnail}`}
+    alt={product.title}
+    className="w-full h-full object-cover"
+  />
                   </div>
                   <div className="p-4">
                     <h3 className="font-semibold text-gray-800 mb-2">

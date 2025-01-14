@@ -11,6 +11,8 @@ const DoctorsList = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [doctorToDelete, setDoctorToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     fetchDoctors();
@@ -39,6 +41,26 @@ const DoctorsList = () => {
       fetchDoctors(); // Refresh list
     } catch (error) {
       toast.error(`Failed to ${status.toLowerCase()} doctor`);
+    }
+  };
+
+  const handleDelete = async (doctorId: string) => {
+    setDoctorToDelete(doctorId);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!doctorToDelete) return;
+
+    try {
+      await adminService.deleteDoctor(doctorToDelete);
+      toast.success('Doctor deleted successfully');
+      fetchDoctors(); // Refresh list
+    } catch (error) {
+      toast.error('Failed to delete doctor');
+    } finally {
+      setShowDeleteModal(false);
+      setDoctorToDelete(null);
     }
   };
 
@@ -163,11 +185,12 @@ const DoctorsList = () => {
                         <FiEdit2 className="h-4 w-4" />
                       </Link>
                       <button
-                        className="p-1.5 rounded-lg hover:bg-red-50 text-red-600 hover:text-red-900 transition-colors"
-                        title="Delete"
-                      >
-                        <FiTrash2 className="h-4 w-4" />
-                      </button>
+        onClick={() => handleDelete(doctor.id)}
+        className="p-1.5 rounded-lg hover:bg-red-50 text-red-600 hover:text-red-900 transition-colors"
+        title="Delete"
+      >
+        <FiTrash2 className="h-4 w-4" />
+      </button>
                     </div>
                   </td>
                 </tr>
@@ -178,6 +201,31 @@ const DoctorsList = () => {
           </div>
         </div>
       </main>
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-sm w-full mx-4">
+            <h3 className="text-lg font-medium mb-4">Confirm Delete</h3>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to delete this doctor? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-4">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </PageWrapper>
   );
 };

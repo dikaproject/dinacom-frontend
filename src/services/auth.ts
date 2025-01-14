@@ -62,49 +62,39 @@ export const authService = {
     }
   },
 
-  registerDoctor: async (doctorData: DoctorRegistration): Promise<AuthResponse> => {
+  registerDoctor: async (doctorData: FormData): Promise<AuthResponse> => {
     try {
-      const formData = new FormData();
-      
-      // Add basic fields
-      const basicFields = [
-        'email', 'password', 'fullName', 'strNumber', 
-        'sipNumber', 'phoneNumber', 'provinsi', 'kabupaten',
-        'kecamatan', 'address', 'codePos', 'layananKesehatanId',
-        'educationBackground'
-      ];
+      // Add validation for required files
+      const photoProfile = doctorData.get('photoProfile');
+      const documentsProof = doctorData.get('documentsProof');
 
-      basicFields.forEach(field => {
-        if (doctorData[field as keyof DoctorRegistration]) {
-          formData.append(field, doctorData[field as keyof DoctorRegistration] as string);
-        }
-      });
-
-      // Add file fields
-      if (doctorData.photoProfile) {
-        formData.append('photoProfile', doctorData.photoProfile);
-      }
-      if (doctorData.documentsProof) {
-        formData.append('documentsProof', doctorData.documentsProof);
+      if (!photoProfile) {
+        throw new Error('Profile photo is required');
       }
 
-      const response = await api.post('/auth/register-doctor', formData, {
+      if (!documentsProof) {
+        throw new Error('Documentation proof is required');
+      }
+
+      const response = await api.post('/auth/register-doctor', doctorData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
 
-      return response.data;
-    } catch (error: unknown) {
-      const axiosError = error as AxiosError<ApiError>;
-      if (axiosError.response?.status === 400) {
-        const message = axiosError.response.data?.message;
-        if (message?.includes('Missing required fields')) {
-          throw new Error(message);
-        }
-        throw new Error('Email already exists');
+      if (!response.data.token || !response.data.user) {
+        throw new Error('Invalid response from server');
       }
-      throw new Error(axiosError.response?.data?.message || 'Doctor registration failed');
+
+      return response.data;
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        const errorMessage = error.response?.data?.message 
+          || error.response?.data?.error 
+          || 'Doctor registration failed';
+        throw new Error(errorMessage);
+      }
+      throw error;
     }
   },
 
