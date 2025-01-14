@@ -96,7 +96,7 @@ const ProductDetail = () => {
                 className="relative h-96 rounded-lg overflow-hidden"
               >
                 <img
-                  src={`/uploads/${product.thumbnail}`}
+                  src={`/uploads/product/${product.thumbnail}`}
                   alt={product.title}
                   className="w-full h-full object-cover"
                 />

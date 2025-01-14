@@ -219,18 +219,34 @@ export const consultationService = {
     }
   },
 
-  startConsultation: async (consultationId: string) => {
+  async startConsultation(consultationId: string) {
     try {
-      // Always use the messages endpoint for chat
-      const endpoint = `/messages/consultation/${consultationId}/chat`;
-      const response = await api.get<{
-        consultation: ConsultationHistory;
-        messages: ChatMessage[];
-        chatEnabled: boolean;
-      }>(endpoint);
-      return response.data;
+      // Get chat messages and availability
+      const chatResponse = await api.get(`/messages/consultation/${consultationId}/chat`);
+      
+      // Get consultation details
+      const consultationResponse = await api.get(`/consultation/${consultationId}`);
+  
+      // Update chat availability check
+      if (!chatResponse.data.chatEnabled || 
+          !(consultationResponse.data.status === 'CONFIRMED' || 
+            consultationResponse.data.status === 'IN_PROGRESS')) {
+        throw new Error('CHAT_NOT_AVAILABLE');
+      }
+  
+      return {
+        consultation: consultationResponse.data,
+        messages: chatResponse.data.messages,
+        chatEnabled: true
+      };
     } catch (error) {
-      console.error('Error starting consultation:', error);
+      if (error.message === 'CHAT_NOT_AVAILABLE') {
+        return {
+          chatEnabled: false,
+          messages: [],
+          consultation: null
+        };
+      }
       throw error;
     }
   }

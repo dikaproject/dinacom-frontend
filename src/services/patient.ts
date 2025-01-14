@@ -60,19 +60,36 @@ export const patientService = {
     },
 
     update: async (id: string, data: Partial<PatientFormData>): Promise<Patient> => {
-        const formData = new FormData();
+        try {
+            const formData = new FormData();
 
-        if (data.email) formData.append('email', data.email);
-        if (data.password) formData.append('password', data.password);
-        if (data.profile) formData.append('profile', JSON.stringify(data.profile));
-        if (data.photoProfile) formData.append('photoProfile', data.photoProfile);
+            if (data.email) formData.append('email', data.email);
+            if (data.password) formData.append('password', data.password);
 
-        const response = await api.put(`/patients-admin/patients/${id}`, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-            },
-        });
-        return response.data;
+            // Handle profile data
+            if (data.profile) {
+                formData.append('profile', JSON.stringify({
+                    ...data.profile,
+                    height: data.profile.height ? Number(data.profile.height) : null
+                }));
+            }
+
+            // Handle photo
+            if (data.photoProfile) {
+                formData.append('photoProfile', data.photoProfile);
+            }
+
+            const response = await api.put(`/patients-admin/patients/${id}`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+
+            return response.data;
+        } catch (error) {
+            console.error('Update patient error:', error);
+            throw error;
+        }
     },
 
     delete: async (id: string): Promise<void> => {

@@ -96,7 +96,7 @@ const EditPatient = ({ params }: { params: Promise<{ id: string }> }) => {
     try {
       await patientService.update(id, formData);
       toast.success('Patient updated successfully');
-      router.push('/admin/patients');
+      router.push('/admin/users');
     } catch (error: unknown) {
       const errorMessage = (error as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to update patient';
       setError(errorMessage);
@@ -114,7 +114,7 @@ const EditPatient = ({ params }: { params: Promise<{ id: string }> }) => {
             {/* Header */}
             <div className="mb-8">
               <Link
-                href="/admin/patients"
+                href="/admin/users"
                 className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-4"
               >
                 <FiArrowLeft className="mr-2" /> Back to Patients

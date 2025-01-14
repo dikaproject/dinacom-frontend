@@ -60,92 +60,95 @@ const ChatRoom = () => {
   }, [consultation?.schedule]);
 
   useEffect(() => {
+    let mounted = true;
+    let connectionRetryCount = 0;
+    const maxRetries = 3;
+    
     const initializeChat = async () => {
       try {
-        if (!id) {
-          toast.error('Invalid consultation ID');
-          router.push('/dashboard/consultation');
-          return;
-        }
-
         setLoading(true);
-        const response = await consultationService.startConsultation(id as string);
         
-        if (!response.chatEnabled) {
-          toast.error('Chat is not available for this consultation');
-          router.push('/dashboard/consultation');
-          return;
+        // First establish socket connection
+        const connectSocket = async () => {
+          while (connectionRetryCount < maxRetries) {
+            try {
+              await chatService.connect();
+              break;
+            } catch (error) {
+              connectionRetryCount++;
+              if (connectionRetryCount === maxRetries) {
+                throw new Error('Failed to connect to chat server');
+              }
+              await new Promise(r => setTimeout(r, 2000)); // Wait before retry
+            }
+          }
+        };
+
+        await connectSocket();
+
+        const { consultation, messages } = await consultationService.startConsultation(id as string);
+        
+        if (!mounted) return;
+
+        if (consultation) {
+          setConsultation(consultation as ConsultationData);
+          
+          // Join consultation room after successful connection
+          chatService.joinConsultation(id as string);
+
+          // Setup message listener
+          chatService.onReceiveMessage((message: ChatMessage) => {
+            setMessages(prev => {
+              if (prev.some(m => m.id === message.id)) return prev;
+              return [...prev, message].sort((a, b) => 
+                new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+              );
+            });
+            
+            requestAnimationFrame(() => {
+              messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+            });
+          });
+
+          // Setup typing indicator with error handling
+          try {
+            chatService.onUserTyping(({ username }) => {
+              if (username !== consultation?.doctor?.fullName) {
+                setPeerTyping(true);
+                if (typingTimeoutRef.current) {
+                  clearTimeout(typingTimeoutRef.current);
+                }
+                typingTimeoutRef.current = setTimeout(() => {
+                  setPeerTyping(false);
+                }, 3000);
+              }
+            });
+          } catch (error) {
+            console.error('Error setting up typing indicator:', error);
+          }
+
+          if (messages) {
+            setMessages(messages);
+          }
         }
 
-        setConsultation(response.consultation as unknown as ConsultationData);
-        setMessages(prevMessages => {
-          // Merge existing messages with new ones, avoiding duplicates
-          const newMessages = [...prevMessages];
-          response.messages?.forEach(message => {
-            if (!newMessages.some(m => m.id === message.id)) {
-              newMessages.push(message);
-            }
-          });
-          return newMessages.sort((a, b) => 
-            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-          );
-        });
-
-        // Setup chat service
-        chatService.connect();
-        chatService.joinConsultation(id as string);
-        
-        // Update message listener to handle real-time updates
-        chatService.onReceiveMessage((message: ChatMessage) => {
-          setMessages(prevMessages => {
-            // Check if message already exists
-            if (prevMessages.some(m => m.id === message.id)) {
-              return prevMessages;
-            }
-            // Add new message and sort by timestamp
-            const newMessages = [...prevMessages, message].sort((a, b) => 
-              new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-            );
-            return newMessages;
-          });
-          
-          // Ensure scroll to bottom happens after state update
-          requestAnimationFrame(() => {
-            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-          });
-        });
-
-        chatService.onUserTyping(({ username }) => {
-          if (username !== consultation?.user?.profile?.fullName) {
-            setPeerTyping(true);
-            if (typingTimeoutRef.current) {
-              clearTimeout(typingTimeoutRef.current);
-            }
-            typingTimeoutRef.current = setTimeout(() => {
-              setPeerTyping(false);
-            }, 3000);
-          }
-        });
-
-      } catch (err) {
-        console.error('Chat initialization error:', err);
-        toast.error('Failed to join consultation');
-        router.push('/dashboard/consultation');
+      } catch (error) {
+        console.error('Chat initialization error:', error);
+        toast.error('Failed to connect to chat. Please refresh the page.');
       } finally {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
 
-    if (id) {
-      initializeChat();
-    }
+    initializeChat();
 
+    // Cleanup function
     return () => {
+      mounted = false;
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
-      }
-      if (debouncedTyping.current) {
-        clearTimeout(debouncedTyping.current);
       }
       chatService.disconnect();
     };
@@ -155,19 +158,15 @@ const ChatRoom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Add connection status check
+  // Add reconnection handler
   useEffect(() => {
-    const checkConnection = setInterval(() => {
-      const connected = chatService.isConnected();
-      setIsConnected(connected);
-      
-      if (!connected) {
-        console.log('Attempting to reconnect...');
+    const reconnectInterval = setInterval(() => {
+      if (!chatService.isConnected()) {
         chatService.reconnect();
       }
-    }, 5000); // Check every 5 seconds
+    }, 5000);
 
-    return () => clearInterval(checkConnection);
+    return () => clearInterval(reconnectInterval);
   }, []);
 
   const handleSendMessage = async (e: React.FormEvent) => {

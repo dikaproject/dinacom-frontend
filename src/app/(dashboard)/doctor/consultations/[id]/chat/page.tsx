@@ -38,10 +38,29 @@ const ChatRoom = () => {
     const initializeChat = async () => {
       try {
         setLoading(true);
+
+        // Initialize socket connection with retries
+        let connectionAttempts = 0;
+        const maxAttempts = 3;
+        
+        while (connectionAttempts < maxAttempts) {
+          try {
+            await chatService.connect();
+            break;
+          } catch (error) {
+            connectionAttempts++;
+            if (connectionAttempts === maxAttempts) {
+              throw new Error('Failed to establish connection after multiple attempts');
+            }
+            // Wait before retry
+            await new Promise(resolve => setTimeout(resolve, 2000));
+          }
+        }
+
         const { consultation, messages } = await consultationService.startConsultation(id as string);
         
-        if (!consultation.doctor) {
-          throw new Error('Doctor information not found');
+        if (!consultation || !consultation.doctor) {
+          throw new Error('Invalid consultation data');
         }
 
         const consultationData: ConsultationData = {
@@ -53,57 +72,64 @@ const ChatRoom = () => {
             fullName: consultation.doctor.fullName
           }
         };
+        
         setConsultation(consultationData);
         setMessages(messages);
-        
-        // Ensure socket connection
-        chatService.connect();
+
+        // Join consultation room
         chatService.joinConsultation(id as string);
         
-        // Message listener with immediate state update
+        // Setup message listener
         chatService.onReceiveMessage((message: ChatMessage) => {
           setMessages(prev => {
-            // Avoid duplicate messages
             if (prev.some(m => m.id === message.id)) return prev;
             return [...prev, message];
           });
-          // Scroll to bottom on new message
-          setTimeout(() => {
+          
+          requestAnimationFrame(() => {
             messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-          }, 100);
+          });
         });
 
-        // Typing indicator with proper timeout
+        // Setup typing indicator
         chatService.onUserTyping(({ username }) => {
-          if (username !== consultation?.doctor?.fullName) {
+          if (username !== consultationData?.user?.profile?.fullName) {
             setPeerTyping(true);
             if (typingTimeoutRef.current) {
               clearTimeout(typingTimeoutRef.current);
             }
             typingTimeoutRef.current = setTimeout(() => {
               setPeerTyping(false);
-            }, 3000); // 3 second timeout
+            }, 3000);
           }
         });
 
       } catch (error) {
-        console.error('Chat error:', error);
-        toast.error('Failed to initialize chat');
+        console.error('Chat initialization error:', error);
+        toast.error('Connection failed. Please refresh the page.');
       } finally {
         setLoading(false);
       }
     };
 
     initializeChat();
+    
+    // Add connection status check
+    const connectionCheck = setInterval(() => {
+      if (!chatService.isConnected()) {
+        chatService.reconnect();
+      }
+    }, 5000);
 
-    // Cleanup function
     return () => {
+      clearInterval(connectionCheck);
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
       }
       if (debouncedTyping.current) {
         clearTimeout(debouncedTyping.current);
       }
+      chatService.leaveConsultation(id as string);
       chatService.disconnect();
     };
   }, [id]);

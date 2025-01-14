@@ -9,20 +9,74 @@ class ChatService {
   private listeners: Map<string, Function[]> = new Map();
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
+  private lastMessageTime: number | null = null;
+  private connectionAttempts = 0;
+  private maxConnectionAttempts = 3;
+  private messageQueue: Array<any> = [];
+  private isConnecting = false;
+  private connectionPromise: Promise<boolean> | null = null;
 
-  connect() {
-    if (this.socket?.connected) return;
+  async connect() {
+    if (this.socket?.connected) {
+      return true;
+    }
 
-    this.socket = io(process.env.NEXT_PUBLIC_API_SOCKET || 'http://localhost:5000', {
-      withCredentials: true,
-      reconnection: true,
-      reconnectionDelay: 1000,
-      reconnectionAttempts: this.maxReconnectAttempts,
-      timeout: 10000,
-      transports: ['websocket', 'polling']
+    if (this.isConnecting) {
+      return this.connectionPromise;
+    }
+
+    this.isConnecting = true;
+    this.connectionPromise = new Promise(async (resolve, reject) => {
+      try {
+        if (this.connectionAttempts >= this.maxConnectionAttempts) {
+          // Reset connection attempts instead of rejecting immediately
+          this.connectionAttempts = 0;
+          await new Promise(r => setTimeout(r, 1000)); // Add delay before retry
+        }
+
+        this.connectionAttempts++;
+        
+        this.socket = io(process.env.NEXT_PUBLIC_API_SOCKET || 'http://localhost:5000', {
+          withCredentials: true,
+          reconnection: true,
+          reconnectionAttempts: 5,
+          reconnectionDelay: 1000,
+          timeout: 10000,
+          transports: ['websocket', 'polling'], // Try websocket first
+          forceNew: false // Changed to false to reuse existing connection
+        });
+
+        // Setup connection verification with timeout
+        const connectionTimeout = setTimeout(() => {
+          if (!this.socket?.connected) {
+            this.socket?.disconnect();
+            this.isConnecting = false;
+            reject(new Error('Connection timeout'));
+          }
+        }, 10000);
+
+        this.socket.on('connect', () => {
+          clearTimeout(connectionTimeout);
+          this.connectionAttempts = 0;
+          this.isConnecting = false;
+          this.setupSocketListeners();
+          resolve(true);
+        });
+
+        this.socket.on('connect_error', (error) => {
+          console.error('Connection error:', error);
+          clearTimeout(connectionTimeout);
+          this.isConnecting = false;
+          reject(error);
+        });
+
+      } catch (error) {
+        this.isConnecting = false;
+        reject(error);
+      }
     });
 
-    this.setupSocketListeners();
+    return this.connectionPromise;
   }
 
   private setupSocketListeners() {
@@ -60,6 +114,34 @@ class ChatService {
     this.socket.onAny((event, ...args) => {
       console.log('Socket event:', event, args);
     });
+
+    this.socket.io.on("ping", () => {
+      console.log("Socket ping");
+    });
+
+    this.socket.io.on("reconnect_attempt", (attempt) => {
+      console.log("Reconnection attempt:", attempt);
+    });
+
+    // Add heartbeat to keep connection alive
+    setInterval(() => {
+      if (this.socket?.connected) {
+        this.socket.emit('heartbeat');
+      }
+    }, 25000);
+  }
+
+  private processMessageQueue() {
+    while (this.messageQueue.length > 0) {
+      const { event, data, resolve, reject } = this.messageQueue.shift()!;
+      this.socket?.emit(event, data, (response: any) => {
+        if (response?.error) {
+          reject(new Error(response.error));
+        } else {
+          resolve();
+        }
+      });
+    }
   }
 
   joinConsultation(consultationId: string, isCompleted: boolean = false) {
@@ -83,21 +165,26 @@ class ChatService {
   }): Promise<void> {
     return new Promise((resolve, reject) => {
       if (!this.socket?.connected) {
-        this.connect();
-      }
-
-      // Prevent sending messages if consultation is completed
-      if (data.isCompleted) {
-        reject(new Error('Cannot send messages in completed consultation'));
+        console.warn('Socket not connected, attempting reconnection...');
+        this.messageQueue.push({
+          event: 'send_message',
+          data,
+          resolve,
+          reject
+        });
+        this.connect().catch(reject);
         return;
       }
 
-      console.log('Sending message:', data);
+      // Add connection check with timeout
+      const connectionTimeout = setTimeout(() => {
+        reject(new Error('Connection timeout'));
+      }, 5000);
 
       this.socket?.emit('send_message', data, (response: any) => {
-        console.log('Message send response:', response);
-        if (response.error) {
-          reject(response.error);
+        clearTimeout(connectionTimeout);
+        if (response?.error) {
+          reject(new Error(response.error));
         } else {
           resolve();
         }
@@ -106,29 +193,25 @@ class ChatService {
   }
 
   onReceiveMessage(callback: (message: ChatMessage) => void) {
+    // Ensure we have an active connection before setting up listeners
     if (!this.socket?.connected) {
-      this.connect();
+      this.connect().catch(console.error);
     }
 
     const messageHandler = (message: ChatMessage) => {
-      console.log('Received message:', message);
       if (this.socket?.connected) {
         callback(message);
-      } else {
-        console.warn('Socket disconnected, attempting reconnect...');
-        this.connect();
       }
     };
 
-    this.socket?.off('receive_message'); // Remove existing listeners
+    // Remove existing listener before adding new one
+    this.socket?.off('receive_message');
     this.socket?.on('receive_message', messageHandler);
     this.addListener('receive_message', messageHandler);
   }
 
   onUserTyping(callback: (data: { username: string }) => void) {
-    if (!this.socket?.connected) {
-      this.connect();
-    }
+    this.connect().catch(console.error);
 
     // Remove existing listener first
     this.socket?.off('user_typing');
@@ -177,6 +260,21 @@ class ChatService {
   reconnect() {
     if (!this.isConnected()) {
       this.connect();
+    }
+  }
+
+  // Add method to verify connection status
+  async verifyConnection(): Promise<boolean> {
+    try {
+      if (this.socket?.connected) {
+        return true;
+      }
+
+      await this.connect();
+      return this.socket?.connected || false;
+    } catch (error) {
+      console.error('Connection verification failed:', error);
+      return false;
     }
   }
 }

@@ -121,7 +121,7 @@ const Shop = () => {
                 >
                   <div className="relative h-48">
                     <img
-                      src={`/uploads/${product.thumbnail}`}
+                      src={`/uploads/product/${product.thumbnail}`}
                       alt={product.title}
                       className="w-full h-full object-cover"
                     />
