@@ -99,8 +99,12 @@ Link Demo Website : https://dinacom.intechofficial.com
 3. Install dependencies for the frontend and backend:
    ```bash
    cd dinacom-frontend && npm install
+   # Note: If you encounter errors during frontend installation, use:
+   npm install --force # This is required because we're using Next.js 15
+
    cd ../dinacom-backend && npm install
    ```
+   
 4. Create a .env.local file in the project root with the following variables:
    ```bash
     DATABASE_URL="mysql://user:password@localhost:3306/lomba_dinacom"
