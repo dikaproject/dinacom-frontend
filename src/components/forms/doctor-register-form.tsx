@@ -80,41 +80,48 @@ const DoctorRegisterForm = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
   
     try {
-      // Validate required fields
-      if (!formData.photoProfile) {
-        throw new Error('Profile photo is required');
-      }
-  
-      if (!formData.documentsProof) {
-        throw new Error('Documentation proof is required');
-      }
-  
-      if (formData.password !== formData.confirmPassword) {
-        throw new Error('Passwords do not match');
-      }
-  
       const formDataToSend = new FormData();
       
-      // Add all form fields
-      Object.entries(formData).forEach(([key, value]) => {
-        if (value !== null && key !== 'confirmPassword') {
-          formDataToSend.append(key, value);
-        }
-      });
+      // Add basic fields
+      formDataToSend.append('email', formData.email);
+      formDataToSend.append('password', formData.password);
+      formDataToSend.append('fullName', formData.fullName);
+      formDataToSend.append('strNumber', formData.strNumber);
+      formDataToSend.append('sipNumber', formData.sipNumber);
+      formDataToSend.append('phoneNumber', formData.phoneNumber);
+      formDataToSend.append('provinsi', formData.provinsi);
+      formDataToSend.append('kabupaten', formData.kabupaten);
+      formDataToSend.append('kecamatan', formData.kecamatan);
+      formDataToSend.append('address', formData.address);
+      formDataToSend.append('codePos', formData.codePos);
+      formDataToSend.append('layananKesehatanId', formData.layananKesehatanId);
+      formDataToSend.append('educationBackground', formData.educationBackground);
+  
+      // Add files with correct field names
+      if (formData.photoProfile) {
+        formDataToSend.append('photoProfile', formData.photoProfile);
+      }
+      if (formData.documentsProof) {
+        formDataToSend.append('documentsProof', formData.documentsProof);
+      }
+  
+      // Debug log
+      console.log('FormData contents before submission:');
+      for (const [key, value] of formDataToSend.entries()) {
+        console.log(`${key}:`, value);
+      }
   
       const response = await authService.registerDoctor(formDataToSend);
       
       if (response.token) {
         toast.success('Registration successful!');
         router.push('/login');
-      } else {
-        throw new Error('Invalid response from server');
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Registration failed';
