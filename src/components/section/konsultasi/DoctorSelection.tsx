@@ -8,7 +8,9 @@ import { FiSearch, FiFilter, FiClock, FiStar, FiMapPin } from 'react-icons/fi';
 import { consultationService } from '@/services/consultation';
 import { ConsultationContext } from './Konsultasi';
 import {  Doctor, ConsultationContextType } from '@/types/consultation';
-
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
 interface DoctorSelectionProps {
   nextStep: () => void;
 }
@@ -18,6 +20,8 @@ const DoctorSelection = ({ nextStep }: DoctorSelectionProps) => {
   const [selectedSpecialization, setSelectedSpecialization] = useState('all');
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
   const { setConsultationData } = useContext(ConsultationContext) as ConsultationContextType;
+  const { user } = useAuth();
+  const router = useRouter();
 
   const { 
     data: doctors = [], 
@@ -78,6 +82,12 @@ const DoctorSelection = ({ nextStep }: DoctorSelectionProps) => {
   });
 
   const handleDoctorSelect = (doctor: Doctor) => {
+    if (!user) {
+      toast.error('Please login to continue');
+      router.push('/login');
+      return;
+    }
+    
     setSelectedDoctor(doctor);
     setConsultationData({
       doctorId: doctor.id,

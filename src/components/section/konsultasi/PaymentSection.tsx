@@ -35,6 +35,7 @@ interface PaymentSectionProps {
 
 export default function PaymentSection({ nextStep, prevStep }: PaymentSectionProps) {
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('BANK_TRANSFER');
+  const [paymentProcessed, setPaymentProcessed] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentProof, setPaymentProof] = useState<File | null>(null);
   const { consultationData, setConsultationData } = useContext(ConsultationContext) as ConsultationContextType;
@@ -42,19 +43,20 @@ export default function PaymentSection({ nextStep, prevStep }: PaymentSectionPro
   const [midtransStatus, setMidtransStatus] = useState<'success' | 'pending' | 'error' | null>(null);
 const [transactionDetails, setTransactionDetails] = useState<MidtransStatusProps['transaction']>(undefined);
 
-  const handleCreatePayment = async () => {
-    try {
-      setIsProcessing(true);
-      const response = await paymentService.createPayment(
-        consultationData.consultationId!,
-        selectedMethod
-      );
-      
-      setPaymentDetails(response.data);
-      setConsultationData({
-        ...consultationData,
-        paymentMethod: selectedMethod
-      });
+const handleCreatePayment = async () => {
+  try {
+    setIsProcessing(true);
+    const response = await paymentService.createPayment(
+      consultationData.consultationId!,
+      selectedMethod
+    );
+    
+    setPaymentDetails(response.data);
+    setPaymentProcessed(true); // Lock payment method after processing
+    setConsultationData({
+      ...consultationData,
+      paymentMethod: selectedMethod
+    });
       
       if (selectedMethod === 'MIDTRANS' && response.data.snapToken) {
         window.snap?.pay(response.data.snapToken, {
@@ -222,56 +224,77 @@ const [transactionDetails, setTransactionDetails] = useState<MidtransStatusProps
       <div className="space-y-4">
         <h3 className="text-lg font-semibold text-gray-800">Select Payment Method</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => setSelectedMethod('BANK_TRANSFER')}
-            className={`p-6 rounded-lg border ${
-              selectedMethod === 'BANK_TRANSFER'
-                ? 'border-purple-500 bg-purple-50'
-                : 'border-gray-200 hover:border-purple-200'
-            }`}
-          >
-            <FiDollarSign className="w-8 h-8 mx-auto mb-3 text-purple-600" />
-            <h4 className="font-medium text-gray-800">Bank Transfer</h4>
-            <p className="text-sm text-gray-500 mt-1">Manual bank transfer</p>
-          </motion.button>
+          {!paymentProcessed ? (
+            <>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setSelectedMethod('BANK_TRANSFER')}
+                disabled={paymentProcessed}
+                className={`p-6 rounded-lg border ${
+                  selectedMethod === 'BANK_TRANSFER'
+                    ? 'border-purple-500 bg-purple-50'
+                    : 'border-gray-200 hover:border-purple-200'
+                } ${paymentProcessed ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                <FiDollarSign className="w-8 h-8 mx-auto mb-3 text-purple-600" />
+                <h4 className="font-medium text-gray-800">Bank Transfer</h4>
+                <p className="text-sm text-gray-500 mt-1">Manual bank transfer</p>
+              </motion.button>
 
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => setSelectedMethod('QRIS')}
-            className={`p-6 rounded-lg border ${
-              selectedMethod === 'QRIS'
-                ? 'border-purple-500 bg-purple-50'
-                : 'border-gray-200 hover:border-purple-200'
-            }`}
-          >
-            <Image
-              src="/qris-icon.jpg"
-              alt="QRIS"
-              width={32}
-              height={32}
-              className="mx-auto mb-3"
-            />
-            <h4 className="font-medium text-gray-800">QRIS</h4>
-            <p className="text-sm text-gray-500 mt-1">Pay with any QRIS-supported app</p>
-          </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setSelectedMethod('QRIS')}
+                disabled={paymentProcessed}
+                className={`p-6 rounded-lg border ${
+                  selectedMethod === 'QRIS'
+                    ? 'border-purple-500 bg-purple-50'
+                    : 'border-gray-200 hover:border-purple-200'
+                } ${paymentProcessed ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                <Image
+                  src="/qris-icon.jpg"
+                  alt="QRIS"
+                  width={32}
+                  height={32}
+                  className="mx-auto mb-3"
+                />
+                <h4 className="font-medium text-gray-800">QRIS</h4>
+                <p className="text-sm text-gray-500 mt-1">Pay with any QRIS-supported app</p>
+              </motion.button>
 
-          <motion.button
-  whileHover={{ scale: 1.02 }}
-  whileTap={{ scale: 0.98 }}
-  onClick={handleSelectMidtrans}
-  className={`p-6 rounded-lg border ${
-    selectedMethod === 'MIDTRANS'
-      ? 'border-purple-500 bg-purple-50'
-      : 'border-gray-200 hover:border-purple-200'
-  }`}
->
-  <FiCreditCard className="w-8 h-8 mx-auto mb-3 text-purple-600" />
-  <h4 className="font-medium text-gray-800">Credit Card / E-Wallet</h4>
-  <p className="text-sm text-gray-500 mt-1">Via Midtrans</p>
-</motion.button>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handleSelectMidtrans}
+                disabled={paymentProcessed}
+                className={`p-6 rounded-lg border ${
+                  selectedMethod === 'MIDTRANS'
+                    ? 'border-purple-500 bg-purple-50'
+                    : 'border-gray-200 hover:border-purple-200'
+                } ${paymentProcessed ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                <FiCreditCard className="w-8 h-8 mx-auto mb-3 text-purple-600" />
+                <h4 className="font-medium text-gray-800">Credit Card / E-Wallet</h4>
+                <p className="text-sm text-gray-500 mt-1">Via Midtrans</p>
+              </motion.button>
+            </>
+          ) : (
+            <div className="col-span-3 p-6 rounded-lg border border-purple-500 bg-purple-50">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-medium text-gray-800">
+                    Selected Payment Method: {selectedMethod.replace('_', ' ')}
+                  </h4>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Payment is being processed. Please complete the payment according to the instructions.
+                  </p>
+                </div>
+                <FiCheckCircle className="w-6 h-6 text-green-500" />
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -338,6 +361,31 @@ const [transactionDetails, setTransactionDetails] = useState<MidtransStatusProps
               )}
             </div>
           )}
+           {selectedMethod === 'QRIS' && (
+            <div className="mt-6 space-y-4">
+              <p className="text-sm text-gray-600">Upload payment proof after completing the transfer:</p>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileUpload}
+                className="hidden"
+                id="payment-proof"
+              />
+              <label
+                htmlFor="payment-proof"
+                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer"
+              >
+                <FiUpload className="mr-2" />
+                Choose File
+              </label>
+              {paymentProof && (
+                <p className="text-sm text-green-600 flex items-center">
+                  <FiCheckCircle className="mr-2" />
+                  {paymentProof.name}
+                </p>
+              )}
+            </div>
+          )}
         </motion.div>
       )}
 
@@ -360,6 +408,14 @@ const [transactionDetails, setTransactionDetails] = useState<MidtransStatusProps
             {isProcessing ? 'Processing...' : 'Process Payment'}
           </button>
         ) : selectedMethod === 'BANK_TRANSFER' ? (
+          <button
+            onClick={handleUploadProof}
+            disabled={!paymentProof || isProcessing}
+            className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
+          >
+            {isProcessing ? 'Uploading...' : 'Submit Payment Proof'}
+          </button>
+        ) : selectedMethod === 'QRIS' ? (
           <button
             onClick={handleUploadProof}
             disabled={!paymentProof || isProcessing}

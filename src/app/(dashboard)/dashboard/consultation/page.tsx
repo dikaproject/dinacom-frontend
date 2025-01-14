@@ -127,18 +127,18 @@ const ConsultationPage = () => {
   }, [selectedConsultation]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-purple-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-b from-white to-purple-50 py-4 sm:py-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-gray-900">
+        <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 mb-4 sm:mb-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
               Consultation History
             </h1>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2 w-full sm:w-auto">
               <button
                 onClick={() => setFilter('ALL')}
-                className={`px-4 py-2 rounded-xl ${
+                className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-xl text-sm ${
                   filter === 'ALL' 
                     ? 'bg-purple-600 text-white' 
                     : 'bg-purple-50 text-purple-600 hover:bg-purple-100'
@@ -148,7 +148,7 @@ const ConsultationPage = () => {
               </button>
               <button
                 onClick={() => setFilter('ONLINE')}
-                className={`px-4 py-2 rounded-xl flex items-center gap-2 ${
+                className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-xl flex items-center justify-center gap-2 text-sm ${
                   filter === 'ONLINE' 
                     ? 'bg-purple-600 text-white' 
                     : 'bg-purple-50 text-purple-600 hover:bg-purple-100'
@@ -159,7 +159,7 @@ const ConsultationPage = () => {
               </button>
               <button
                 onClick={() => setFilter('OFFLINE')}
-                className={`px-4 py-2 rounded-xl flex items-center gap-2 ${
+                className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-xl flex items-center justify-center gap-2 text-sm ${
                   filter === 'OFFLINE' 
                     ? 'bg-purple-600 text-white' 
                     : 'bg-purple-50 text-purple-600 hover:bg-purple-100'
@@ -171,13 +171,13 @@ const ConsultationPage = () => {
             </div>
           </div>
           
-          {/* Add status filter buttons */}
-          <div className="flex flex-wrap gap-2 mt-4">
+          {/* Status filter buttons */}
+          <div className="flex flex-wrap gap-2 mt-4 w-full">
             {['ALL', 'PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELLED'].map((status) => (
               <button
                 key={status}
                 onClick={() => setStatusFilter(status as typeof statusFilter)}
-                className={`px-4 py-2 rounded-xl text-sm ${
+                className={`flex-1 sm:flex-none px-3 py-1.5 rounded-xl text-xs sm:text-sm ${
                   statusFilter === status
                     ? 'bg-purple-600 text-white'
                     : 'bg-purple-50 text-purple-600 hover:bg-purple-100'
@@ -197,7 +197,7 @@ const ConsultationPage = () => {
             No consultations found
           </div>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
             {filteredConsultations.map((consultation) => (
               <motion.div
                 key={consultation.id}
@@ -282,18 +282,18 @@ const ConsultationPage = () => {
 
         {/* Detail Modal */}
         {selectedConsultation && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="bg-white rounded-2xl shadow-2xl p-6 max-w-lg w-full mx-4"
+              className="bg-white rounded-2xl shadow-2xl p-4 sm:p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto"
             >
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 <div className="flex justify-between items-start">
-                  <h3 className="text-lg font-medium">Consultation Details</h3>
+                  <h3 className="text-base sm:text-lg font-medium">Consultation Details</h3>
                   <button
                     onClick={() => setSelectedConsultation(null)}
-                    className="text-gray-400 hover:text-gray-600"
+                    className="text-gray-400 hover:text-gray-600 p-2"
                   >
                     ✕
                   </button>
@@ -301,7 +301,7 @@ const ConsultationPage = () => {
 
                 {/* Modal Content */}
                 <div className="space-y-4">
-                  <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+                  <div className="bg-gray-50 rounded-lg p-3 sm:p-4 space-y-3">
                     {/* Status and Type */}
                     <div className="flex justify-between items-center">
                       <div className="flex items-center gap-2">
@@ -399,31 +399,31 @@ const ConsultationPage = () => {
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="flex justify-end gap-3">
-                  {selectedConsultation.type === 'ONLINE' && selectedConsultation.status === 'CONFIRMED' && (
-  <>
-    {timeUntilConsultation && (
-      <p className="text-sm text-purple-600 font-medium mt-2">
-        {timeUntilConsultation}
-      </p>
-    )}
-    <button 
-  onClick={() => handleJoinChat(selectedConsultation)}
-  className="px-4 py-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700 flex items-center gap-2"
->
-  <FiMessageCircle />
-  Join Chat
-</button>
-  </>
-)}
+                  <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3">
+                    {selectedConsultation.type === 'ONLINE' && selectedConsultation.status === 'CONFIRMED' && (
+                      <>
+                        {timeUntilConsultation && (
+                          <p className="text-sm text-purple-600 font-medium">
+                            {timeUntilConsultation}
+                          </p>
+                        )}
+                        <button 
+                          onClick={() => handleJoinChat(selectedConsultation)}
+                          className="w-full sm:w-auto px-4 py-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700 flex items-center justify-center gap-2"
+                        >
+                          <FiMessageCircle />
+                          Join Chat
+                        </button>
+                      </>
+                    )}
                     {selectedConsultation.status === 'PENDING' && (
-                      <button className="px-4 py-2 bg-red-500 text-white rounded-xl hover:bg-red-600">
+                      <button className="w-full sm:w-auto px-4 py-2 bg-red-500 text-white rounded-xl hover:bg-red-600">
                         Cancel Consultation
                       </button>
                     )}
                     <button
                       onClick={() => setSelectedConsultation(null)}
-                      className="px-4 py-2 text-gray-600 hover:text-gray-800 bg-gray-100 rounded-xl hover:bg-gray-200"
+                      className="w-full sm:w-auto px-4 py-2 text-gray-600 hover:text-gray-800 bg-gray-100 rounded-xl hover:bg-gray-200"
                     >
                       Close
                     </button>

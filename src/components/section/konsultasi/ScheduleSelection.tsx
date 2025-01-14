@@ -107,8 +107,9 @@ const ScheduleSelection = ({ nextStep, prevStep }: ScheduleSelectionProps) => {
         format(selectedDate, 'yyyy-MM-dd')
       );
   
+      // Convert UTC to WIB
       setTimeSlots(timeSlots.map(slot => ({
-        time: slot.time,
+        time: convertToWIB(slot.time),
         isAvailable: slot.isAvailable,
         reason: slot.reason
       })));
@@ -118,6 +119,19 @@ const ScheduleSelection = ({ nextStep, prevStep }: ScheduleSelectionProps) => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const convertToWIB = (time: string) => {
+    const date = new Date();
+    const [hours, minutes] = time.split(':');
+    date.setHours(parseInt(hours), parseInt(minutes));
+    
+    return date.toLocaleTimeString('en-US', {
+      timeZone: 'Asia/Jakarta',
+      hour12: false,
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   const handleDateChange = (offset: number) => {

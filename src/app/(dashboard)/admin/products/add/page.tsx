@@ -84,7 +84,7 @@ const AddProduct = () => {
       };
 
       await productService.create(productData);
-      router.push("/admin/product");
+      router.push("/admin/products");
     } catch (error: any) {
       setError(error?.response?.data?.message || "Failed to create product");
       console.error("Create error:", error);
