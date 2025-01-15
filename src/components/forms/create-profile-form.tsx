@@ -190,6 +190,7 @@ const CreateProfileForm = () => {
                     name="phoneNumber"
                     value={formData.phoneNumber}
                     onChange={handleChange}
+                    placeholder="Use country code example (e.g. 6281234567890) not 081234567890"
                     className="mt-1 w-full px-4 py-3 text-gray-600 rounded-lg border border-purple-100 focus:outline-none focus:ring-2 focus:ring-purple-400"
                     required
                   />
