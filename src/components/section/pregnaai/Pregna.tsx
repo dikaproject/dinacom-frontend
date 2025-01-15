@@ -270,45 +270,45 @@ const PregnaAI = () => {
           </div>
 
           {/* Input Area */}
-          <div className="border-t border-gray-200 px-3 sm:px-6 py-3 sm:py-4 bg-white flex-none">
-            <div className="flex items-center gap-2 sm:gap-4">
-              <div className="hidden sm:flex space-x-2">
-                <button 
-                  onClick={() => setUseWebSearch(!useWebSearch)}
-                  className={`p-2 transition-colors ${
-                    useWebSearch 
-                      ? 'text-purple-600 bg-purple-50' 
-                      : 'text-gray-400 hover:text-purple-600'
-                  } rounded-lg`}
-                  title={useWebSearch ? "Web search enabled" : "Web search disabled"}
-                >
-                  <FiGlobe className="w-5 h-5" />
-                </button>
-              </div>
-              <input
-                type="text"
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-                placeholder="Type your message..."
-                className="flex-1 px-4 py-2 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-800 min-w-0"
-              />
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={handleSend}
-                disabled={!newMessage.trim()}
-                className="flex-none bg-purple-600 text-white p-2 rounded-full disabled:opacity-50"
-              >
-                <FiSend className="w-5 h-5" />
-              </motion.button>
-            </div>
-            {useWebSearch && (
-              <div className="mt-2 text-xs text-gray-500 px-4">
-                Web search is enabled. AI will include online sources in responses.
-              </div>
-            )}
-          </div>
+          <div className="border-t border-gray-200 px-2 sm:px-6 py-2 sm:py-4 bg-white flex-none">
+  <div className="flex items-center gap-2 sm:gap-4">
+    <div className="flex space-x-2">
+      <button 
+        onClick={() => setUseWebSearch(!useWebSearch)}
+        className={`p-1.5 sm:p-2 transition-colors ${
+          useWebSearch 
+            ? 'text-purple-600 bg-purple-50' 
+            : 'text-gray-400 hover:text-purple-600'
+        } rounded-lg`}
+        title={useWebSearch ? "Web search enabled" : "Web search disabled"}
+      >
+        <FiGlobe className="w-4 h-4 sm:w-5 sm:h-5" />
+      </button>
+    </div>
+    <input
+      type="text"
+      value={newMessage}
+      onChange={(e) => setNewMessage(e.target.value)}
+      onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+      placeholder="Type your message..."
+      className="flex-1 px-3 sm:px-4 py-2 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-400 text-gray-800 min-w-0 text-sm sm:text-base"
+    />
+    <motion.button
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      onClick={handleSend}
+      disabled={!newMessage.trim()}
+      className="flex-none bg-purple-600 text-white p-1.5 sm:p-2 rounded-full disabled:opacity-50"
+    >
+      <FiSend className="w-4 h-4 sm:w-5 sm:h-5" />
+    </motion.button>
+  </div>
+  {useWebSearch && (
+    <div className="mt-1.5 sm:mt-2 text-xs text-gray-500 px-2 sm:px-4">
+      Web search is enabled. AI will include online sources in responses.
+    </div>
+  )}
+</div>
         </div>
       </div>
     </div>
