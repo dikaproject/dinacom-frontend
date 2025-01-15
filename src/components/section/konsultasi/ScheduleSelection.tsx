@@ -250,7 +250,7 @@ const ScheduleSelection = ({ nextStep, prevStep }: ScheduleSelectionProps) => {
 
       {/* Time Slots */}
       <div className="space-y-4">
-        <h3 className="text-lg font-medium text-gray-900">Select Time</h3>
+        <h3 className="text-lg font-medium text-gray-900">Select Time ( UTC+0 )</h3>
         {isLoading ? (
           <div className="text-center py-8">Loading schedules...</div>
         ) : (
