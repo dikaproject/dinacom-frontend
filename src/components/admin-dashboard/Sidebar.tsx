@@ -13,8 +13,6 @@ import {
   PackagePlus,
   ChevronLeft,
   ChevronRight,
-  FileText, // For articles
-  BookOpen,
   LogOut, // For article categories
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
