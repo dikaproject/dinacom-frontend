@@ -31,7 +31,7 @@ Link Demo Website : https://dinacom.intechofficial.com
 - email : dika@gmail.com (Demo Doctor)
 - password : password
 ---
-- email : dika@gmail.com (Demo User)
+- email : dikagilang2007@gmail.com (Demo User)
 - password : Dika#3321
 
 ---
