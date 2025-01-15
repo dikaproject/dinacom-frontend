@@ -94,6 +94,9 @@ export interface ConsultationData {
     name: string;
     district: string;
   };
+  paymentMethod?: 'QRIS' | 'CASH' | 'TRANSFER';
+  paymentStatus?: string;
+  paymentProofRequired?: boolean;
   paymentMethod?: 'BANK_TRANSFER' | 'QRIS' | 'MIDTRANS';
   paymentStatus?: string;
   transactionId?: string;

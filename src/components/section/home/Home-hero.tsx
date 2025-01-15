@@ -57,16 +57,22 @@ const HomeHero = () => {
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          className="px-8 py-4 bg-gradient-to-r from-purple-600 to-purple-500 text-white rounded-full font-medium shadow-lg hover:shadow-xl transition-all"
-          onClick={() => router.push('/register')}
+          className="px-8 py-4 bg-gradient-to-r from-purple-600 to-purple-500 text-white rounded-full font-medium shadow-lg hover:shadow-xl transition-all cursor-pointer"
+          onClick={(e: React.MouseEvent) => {
+            e.preventDefault();
+            router.push('/register');
+          }}
         >
           Start Your Journey
         </motion.button>
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          className="px-8 py-4 bg-white text-purple-600 rounded-full font-medium shadow-md hover:shadow-lg transition-all border border-purple-100"
-          onClick={() => router.push('/pregna')}
+          className="px-8 py-4 bg-white text-purple-600 rounded-full font-medium shadow-md hover:shadow-lg transition-all border border-purple-100 cursor-pointer"
+          onClick={(e: React.MouseEvent) => {
+            e.preventDefault();
+            router.push('/pregna');
+          }}
         >
           Learn More
         </motion.button>
