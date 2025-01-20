@@ -29,10 +29,10 @@ Link Demo Website : https://dinacom.intechofficial.com
 - passsword : password123
 ---
 - email : dika@gmail.com (Demo Doctor)
-- password : Dika#3321
----
-- email : dika@gmail.com (Demo Doctor)
 - password : password
+---
+- email : dikagilang2007@gmail.com (Demo User)
+- password : Dika#3321
 
 ---
 
